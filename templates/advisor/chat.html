@@ -1,0 +1,539 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Советчик{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="bg-white shadow rounded-lg">
+        <!-- Заголовок чата -->
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <span class="text-2xl mr-3">🤖</span>
+                    <h1 class="text-xl font-semibold text-gray-900">AI Советчик</h1>
+                    <span class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">LIVE</span>
+                    <div class="ml-2 flex items-center text-xs text-gray-500">
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
+                        <span id="live-status">Обновлено сейчас</span>
+                    </div>
+                    <!-- Информация о текущем бизнесе -->
+                    <div class="ml-3 px-2 py-1 bg-gray-100 rounded text-xs">
+                        <span class="text-gray-600">🏢</span>
+                        <span class="font-medium">{{ business.name }}</span>
+                        <a href="{% url 'businesses:list' %}" class="ml-1 text-blue-600 hover:text-blue-800" title="Сменить бизнес">⚙️</a>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="relative">
+                        <button onclick="toggleExportMenu()" class="px-2 py-1 bg-purple-100 hover:bg-purple-200 rounded text-xs transition-colors" title="Экспорт данных">
+                            📊 Экспорт
+                        </button>
+                        <div id="export-menu" class="hidden absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-48">
+                            <div class="p-2 border-b border-gray-100">
+                                <div class="text-xs font-medium text-gray-700 mb-1">📈 Аналитика</div>
+                                <div class="flex gap-1">
+                                    <a href="{% url 'advisor:export_analytics' 'excel' %}" class="px-2 py-1 bg-green-100 hover:bg-green-200 rounded text-xs transition-colors">Excel</a>
+                                    <a href="{% url 'advisor:export_analytics' 'pdf' %}" class="px-2 py-1 bg-red-100 hover:bg-red-200 rounded text-xs transition-colors">PDF</a>
+                                    <a href="{% url 'advisor:export_analytics' 'csv' %}" class="px-2 py-1 bg-blue-100 hover:bg-blue-200 rounded text-xs transition-colors">CSV</a>
+                                </div>
+                            </div>
+                            <div class="p-2">
+                                <div class="text-xs font-medium text-gray-700 mb-1">💬 История чата</div>
+                                <div class="flex gap-1">
+                                    <button onclick="exportChat('pdf')" class="px-2 py-1 bg-red-100 hover:bg-red-200 rounded text-xs transition-colors">PDF</button>
+                                    <button onclick="exportChat('txt')" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-xs transition-colors">TXT</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="refreshMetrics()" class="px-2 py-1 bg-green-100 hover:bg-green-200 rounded text-xs transition-colors" title="Обновить метрики">
+                        🔄
+                    </button>
+                    <div class="flex gap-1">
+                        <button onclick="clearMessagesOnly()" class="px-2 py-1 bg-yellow-100 hover:bg-yellow-200 rounded text-xs transition-colors" title="Очистить только визуально">
+                            🧹
+                        </button>
+                        <button onclick="newSession()" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm transition-colors" title="Новая сессия">
+                            🗑️ Очистить
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- Область сообщений -->
+        <div id="messages-container" class="px-6 py-4 max-h-96 overflow-y-auto">
+            {% include 'advisor/_messages.html' %}
+        </div>
+
+
+
+
+
+        <!-- Быстрые подсказки -->
+        <div class="px-6 py-3 bg-gray-50 border-t border-gray-200">
+            <div class="space-y-2 mb-3">
+                <div class="text-xs text-gray-500">⚡ Быстрые метрики</div>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" class="px-2 py-1 bg-blue-100 hover:bg-blue-200 rounded text-sm transition-colors"
+                            onclick="const i=document.querySelector('input[name=q]'); i.value='Сколько сегодня новых клиентов?'; i.form.requestSubmit();">
+                        Сколько сегодня новых клиентов?
+                    </button>
+                    <button type="button" class="px-2 py-1 bg-blue-100 hover:bg-blue-200 rounded text-sm transition-colors"
+                            onclick="const i=document.querySelector('input[name=q]'); i.value='Сколько сегодня выдано купонов?'; i.form.requestSubmit();">
+                        Сколько сегодня выдано купонов?
+                    </button>
+                    <button type="button" class="px-2 py-1 bg-blue-100 hover:bg-blue-200 rounded text-sm transition-colors"
+                            onclick="const i=document.querySelector('input[name=q]'); i.value='Сколько сегодня погашений?'; i.form.requestSubmit();">
+                        Сколько сегодня погашений?
+                    </button>
+                    <button type="button" class="px-2 py-1 bg-blue-100 hover:bg-blue-200 rounded text-sm transition-colors"
+                            onclick="const i=document.querySelector('input[name=q]'); i.value='CR issue→redeem сегодня?'; i.form.requestSubmit();">
+                        CR issue→redeem сегодня?
+                    </button>
+                    <button type="button" class="px-2 py-1 bg-blue-100 hover:bg-blue-200 rounded text-sm transition-colors"
+                            onclick="const i=document.querySelector('input[name=q]'); i.value='Средний чек сегодня?'; i.form.requestSubmit();">
+                        Средний чек сегодня?
+                    </button>
+                </div>
+
+                <div class="text-xs text-gray-500 mt-2">📊 Аналитика/тренды</div>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" class="px-2 py-1 bg-green-100 hover:bg-green-200 rounded text-sm transition-colors"
+                            onclick="const i=document.querySelector('input[name=q]'); i.value='Тренд погашений за 30 дней'; i.form.requestSubmit();">
+                        Тренд погашений за 30 дней
+                    </button>
+                    <button type="button" class="px-2 py-1 bg-green-100 hover:bg-green-200 rounded text-sm transition-colors"
+                            onclick="const i=document.querySelector('input[name=q]'); i.value='Топ кампаний по погашениям'; i.form.requestSubmit();">
+                        Топ кампаний по погашениям
+                    </button>
+                    <button type="button" class="px-2 py-1 bg-green-100 hover:bg-green-200 rounded text-sm transition-colors"
+                            onclick="const i=document.querySelector('input[name=q]'); i.value='Вклад каналов за 30 дней'; i.form.requestSubmit();">
+                        Вклад каналов за 30 дней
+                    </button>
+                    <button type="button" class="px-2 py-1 bg-green-100 hover:bg-green-200 rounded text-sm transition-colors"
+                            onclick="const i=document.querySelector('input[name=q]'); i.value='Недельный тренд'; i.form.requestSubmit();">
+                        Недельный тренд
+                    </button>
+                </div>
+
+                <div class="text-xs text-gray-500 mt-2">🎯 Рекомендации/действия</div>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" class="px-2 py-1 bg-yellow-100 hover:bg-yellow-200 rounded text-sm transition-colors"
+                            onclick="const i=document.querySelector('input[name=q]'); i.value='Сделай черновик рассылки по VIP на завтра 10:00'; i.form.requestSubmit();">
+                        Сделай черновик рассылки по VIP на завтра 10:00
+                    </button>
+                    <button type="button" class="px-2 py-1 bg-yellow-100 hover:bg-yellow-200 rounded text-sm transition-colors"
+                            onclick="const i=document.querySelector('input[name=q]'); i.value='Оптимизируй каскад под бюджет 50000'; i.form.requestSubmit();">
+                        Оптимизируй каскад под бюджет 50000
+                    </button>
+                    <button type="button" class="px-2 py-1 bg-yellow-100 hover:bg-yellow-200 rounded text-sm transition-colors"
+                            onclick="const i=document.querySelector('input[name=q]'); i.value='Прогноз погашений на 7 дней'; i.form.requestSubmit();">
+                        Прогноз погашений на 7 дней
+                    </button>
+                    <button type="button" class="px-2 py-1 bg-yellow-100 hover:bg-yellow-200 rounded text-sm transition-colors"
+                            onclick="const i=document.querySelector('input[name=q]'); i.value='Создай Wallet-оффер −15% до завтра'; i.form.requestSubmit();">
+                        Создай Wallet-оффер −15% до завтра
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Форма ввода -->
+        <div class="px-6 py-4 border-t border-gray-200">
+            <form method="post" class="flex gap-2" onsubmit="return handleSubmit(this)" id="chat-form">
+                {% csrf_token %}
+                <div class="flex-1 relative">
+                    <input type="text" name="q" placeholder="Задайте вопрос или нажмите 🎤 для голосового ввода..." 
+                           class="w-full px-3 py-2 pr-12 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           autocomplete="off" required id="message-input">
+                    <button type="button" id="voice-btn" class="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-blue-600 transition-colors">
+                        🎤
+                    </button>
+                </div>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" id="submit-btn">
+                    Отправить
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Django URLs и данные для JavaScript
+const URLS = {
+    newSession: '{% url "advisor:new_session" %}',
+    exportChat: '{% url "advisor:export_chat" 0 "pdf" %}'
+};
+
+const SESSION_ID = '{{ session.id|default:"" }}';
+
+// Отладочная информация
+console.log('JavaScript loading...');
+console.log('URLs:', URLS);
+console.log('Session ID:', SESSION_ID);
+
+// Функция для инициализации графиков
+function initializeCharts() {
+    console.log('Initializing charts...');
+    
+    const canvases = document.querySelectorAll('.chart-canvas');
+    console.log('Found canvases:', canvases.length);
+    
+    canvases.forEach((canvas, index) => {
+        try {
+            console.log(`Processing canvas ${index + 1}:`, canvas);
+            
+            // Получаем данные из data-атрибутов
+            const chartType = canvas.getAttribute('data-chart-type');
+            const labelsStr = canvas.getAttribute('data-chart-labels');
+            const dataStr = canvas.getAttribute('data-chart-data');
+            const title = canvas.getAttribute('data-chart-title');
+            const backgroundColor = canvas.getAttribute('data-chart-bg');
+            const borderColor = canvas.getAttribute('data-chart-border');
+            
+            console.log('Raw attributes:', {
+                chartType,
+                labelsStr,
+                dataStr,
+                title,
+                backgroundColor,
+                borderColor
+            });
+            
+            // Парсим JSON данные
+            const labels = JSON.parse(labelsStr || '[]');
+            const data = JSON.parse(dataStr || '[]');
+            
+            console.log('Parsed data:', { chartType, labels, data, title });
+            
+            // Проверяем, что Chart.js доступен
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js не загружен!');
+                return;
+            }
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Создаем график
+            const chart = new Chart(ctx, {
+                type: chartType,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Количество',
+                        data: data,
+                        backgroundColor: chartType === 'line' ? 'rgba(59, 130, 246, 0.1)' : backgroundColor,
+                        borderColor: borderColor,
+                        borderWidth: 2,
+                        fill: chartType === 'line'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: title
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            console.log('Chart created successfully:', chart);
+            
+        } catch (error) {
+            console.error('Error creating chart:', error);
+            console.error('Canvas element:', canvas);
+        }
+    });
+}
+
+function handleSubmit(form) {
+    const input = form.querySelector('input[name="q"]');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
+    if (!input.value.trim()) return false;
+    
+    const message = input.value.trim();
+    console.log('Sending message:', message);
+    
+    // Показываем индикатор загрузки
+    submitBtn.textContent = '...';
+    submitBtn.disabled = true;
+    
+    const formData = new FormData(form);
+    
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.text();
+    })
+    .then(html => {
+        console.log('Received HTML:', html.substring(0, 200));
+        
+        // Простое решение: обновляем только область с сообщениями
+        const messagesContainer = document.getElementById('messages-container');
+        messagesContainer.innerHTML = html;
+        
+        // Инициализируем графики после обновления HTML
+        initializeCharts();
+        
+        scrollToBottom();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        addAssistantMessage('❌ Произошла ошибка: ' + error.message);
+    })
+    .finally(() => {
+        submitBtn.textContent = 'Отправить';
+        submitBtn.disabled = false;
+        input.value = '';
+        input.focus();
+    });
+    
+    return false;
+}
+
+function addUserMessage(text) {
+    const container = document.getElementById('messages-container');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'mb-4 flex justify-end';
+    messageDiv.innerHTML = `
+        <div class="max-w-xs lg:max-w-md px-4 py-2 bg-blue-600 text-white rounded-lg">
+            ${escapeHtml(text)}
+        </div>
+    `;
+    container.appendChild(messageDiv);
+    scrollToBottom();
+}
+
+function addAssistantMessage(text) {
+    const container = document.getElementById('messages-container');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'mb-4 flex justify-start';
+    messageDiv.innerHTML = `
+        <div class="max-w-xs lg:max-w-md px-4 py-2 bg-gray-100 text-gray-900 rounded-lg">
+            ${escapeHtml(text)}
+        </div>
+    `;
+    container.appendChild(messageDiv);
+    scrollToBottom();
+}
+
+function scrollToBottom() {
+    const container = document.getElementById('messages-container');
+    container.scrollTop = container.scrollHeight;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function newSession() {
+    console.log('newSession() called');
+    if (confirm('Очистить историю чата?')) {
+        try {
+            // Пытаемся отправить POST запрос для создания новой сессии
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = URLS.newSession;
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = 'csrfmiddlewaretoken';
+            csrfToken.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            form.appendChild(csrfToken);
+            document.body.appendChild(form);
+            
+            // Отправляем форму
+            form.submit();
+            
+            // Удаляем форму
+            document.body.removeChild(form);
+        } catch (error) {
+            console.error('Error creating new session:', error);
+            // Fallback: просто очищаем визуально и перезагружаем
+            document.getElementById('messages-container').innerHTML = '';
+            window.location.reload();
+        }
+    }
+}
+
+// Быстрая очистка только визуально
+function clearMessagesOnly() {
+    console.log('clearMessagesOnly() called');
+    if (confirm('Очистить сообщения только визуально? (История сохранится в базе)')) {
+        document.getElementById('messages-container').innerHTML = '';
+        document.querySelector('input[name="q"]').focus();
+        console.log('✅ Messages cleared visually');
+    }
+}
+
+// Тестовая функция для проверки
+function testButtons() {
+    console.log('🧪 Testing buttons...');
+    alert('Кнопки работают! JavaScript загружен корректно.');
+}
+
+// Автофокус на поле ввода
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Chat page loaded successfully!');
+    console.log('✅ Functions available:', {
+        newSession: typeof newSession,
+        clearMessagesOnly: typeof clearMessagesOnly,
+        handleSubmit: typeof handleSubmit,
+        initializeCharts: typeof initializeCharts
+    });
+    
+    // Инициализируем существующие графики
+    initializeCharts();
+    
+    // Проверяем, что кнопки существуют
+    const clearBtn = document.querySelector('button[onclick="newSession()"]');
+    const quickClearBtn = document.querySelector('button[onclick="clearMessagesOnly()"]');
+    
+    console.log('🔘 Buttons found:', {
+        clearBtn: !!clearBtn,
+        quickClearBtn: !!quickClearBtn
+    });
+    
+    document.querySelector('input[name="q"]').focus();
+    scrollToBottom();
+});
+
+// Голосовой ввод
+let recognition;
+if ('webkitSpeechRecognition' in window) {
+    recognition = new webkitSpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'ru-RU';
+    
+    const voiceBtn = document.getElementById('voice-btn');
+    const messageInput = document.getElementById('message-input');
+    
+    voiceBtn.addEventListener('click', function() {
+        if (recognition) {
+            voiceBtn.textContent = '🔴';
+            voiceBtn.classList.add('animate-pulse');
+            recognition.start();
+        }
+    });
+    
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        messageInput.value = transcript;
+        voiceBtn.textContent = '🎤';
+        voiceBtn.classList.remove('animate-pulse');
+    };
+    
+    recognition.onerror = function(event) {
+        console.error('Speech recognition error:', event.error);
+        voiceBtn.textContent = '🎤';
+        voiceBtn.classList.remove('animate-pulse');
+    };
+    
+    recognition.onend = function() {
+        voiceBtn.textContent = '🎤';
+        voiceBtn.classList.remove('animate-pulse');
+    };
+} else {
+    document.getElementById('voice-btn').style.display = 'none';
+}
+
+// Функция обновления метрик
+function refreshMetrics() {
+    console.log('refreshMetrics() called');
+    const refreshBtn = document.querySelector('button[onclick="refreshMetrics()"]');
+    const statusEl = document.getElementById('live-status');
+    
+    refreshBtn.textContent = '⏳';
+    statusEl.textContent = 'Обновляем...';
+    
+    // Автоматически задаем вопрос для обновления
+    const input = document.querySelector('input[name="q"]');
+    input.value = 'Сколько сегодня новых клиентов?';
+    
+    setTimeout(() => {
+        document.getElementById('chat-form').requestSubmit();
+        refreshBtn.textContent = '🔄';
+        statusEl.textContent = 'Обновлено сейчас';
+    }, 500);
+}
+
+// Автообновление каждые 5 минут
+setInterval(() => {
+    const statusEl = document.getElementById('live-status');
+    const now = new Date();
+    statusEl.textContent = `Обновлено в ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+}, 300000); // 5 минут
+
+// Обновление времени каждую минуту
+setInterval(() => {
+    const statusEl = document.getElementById('live-status');
+    if (statusEl.textContent.includes('Обновлено в')) {
+        return; // Не обновляем если уже показано время
+    }
+    const now = new Date();
+    const minutes = Math.floor((now - new Date(now.toDateString())) / 60000);
+    if (minutes === 0) {
+        statusEl.textContent = 'Обновлено сейчас';
+    } else if (minutes < 60) {
+        statusEl.textContent = `Обновлено ${minutes} мин назад`;
+    } else {
+        const hours = Math.floor(minutes / 60);
+        statusEl.textContent = `Обновлено ${hours}ч назад`;
+    }
+}, 60000); // 1 минута
+
+// Функции экспорта
+function toggleExportMenu() {
+    const menu = document.getElementById('export-menu');
+    menu.classList.toggle('hidden');
+}
+
+function exportChat(format) {
+    if (SESSION_ID && SESSION_ID.trim()) {
+        const url = URLS.exportChat.replace('0', SESSION_ID).replace('pdf', format);
+        window.open(url, '_blank');
+    } else {
+        alert('Сессия не найдена. Попробуйте обновить страницу.');
+    }
+    toggleExportMenu();
+}
+
+// Закрытие меню экспорта при клике вне его
+document.addEventListener('click', function(event) {
+    const menu = document.getElementById('export-menu');
+    const button = event.target.closest('button[onclick="toggleExportMenu()"]');
+    
+    if (!button && !menu.contains(event.target)) {
+        menu.classList.add('hidden');
+    }
+});
+
+
+</script>
+{% endblock %}
+

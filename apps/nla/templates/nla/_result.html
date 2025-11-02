@@ -1,0 +1,139 @@
+{% if rows %}
+<div class="bg-white rounded-lg shadow overflow-hidden">
+    <!-- Заголовок результата -->
+    <div class="px-6 py-4 border-b border-gray-200">
+        <div class="flex justify-between items-start">
+            <div>
+                <h3 class="text-lg font-medium text-gray-900">📊 Результат запроса</h3>
+                <p class="mt-1 text-sm text-gray-600">
+                    <strong>Вопрос:</strong> "{{ question }}"
+                </p>
+            </div>
+            <div class="flex space-x-2">
+                <!-- Кнопка экспорта CSV -->
+                <form method="post" action="{% url 'nla:ask_csv' %}" class="inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="spec" value="{{ spec_json }}">
+                    <input type="hidden" name="question" value="{{ question }}">
+                    <button type="submit" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        CSV
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Метаинформация -->
+    <div class="px-6 py-3 bg-gray-50 border-b border-gray-200">
+        <div class="text-sm text-gray-600 space-y-1">
+            <div class="flex flex-wrap gap-4">
+                <span><strong>Период:</strong> {{ meta.start }} — {{ meta.end }}</span>
+                <span><strong>Метрики:</strong> {{ meta.metrics|join:", " }}</span>
+                {% if meta.dimensions %}
+                    <span><strong>Группировка:</strong> {{ meta.dimensions|join:", " }}</span>
+                {% endif %}
+                {% if meta.filters.campaign_names %}
+                    <span><strong>Кампании:</strong> {{ meta.filters.campaign_names|join:", " }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Таблица результатов -->
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    {% for key, value in rows.0.items %}
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% if key == 'date' %}📅 Дата
+                            {% elif key == 'hour' %}🕐 Час
+                            {% elif key == 'campaign' %}📢 Кампания
+                            {% elif key == 'variant' %}🧪 Вариант
+                            {% elif key == 'source' %}🔗 Источник
+                            {% elif key == 'views' %}👁️ Просмотры
+                            {% elif key == 'clicks' %}👆 Клики
+                            {% elif key == 'issues' %}🎟️ Выдачи
+                            {% elif key == 'redeems' %}💰 Погашения
+                            {% elif key == 'cr_click_issue' %}📈 CR клик→выдача (%)
+                            {% elif key == 'cr_issue_redeem' %}📈 CR выдача→погашение (%)
+                            {% else %}{{ key|title }}
+                            {% endif %}
+                        </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for row in rows %}
+                    <tr class="hover:bg-gray-50">
+                        {% for key, value in row.items %}
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                {% if key == 'date' or key == 'hour' %}
+                                    <span class="text-gray-900 font-medium">{{ value }}</span>
+                                {% elif 'cr_' in key %}
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+                                        {% if value >= 10 %}bg-green-100 text-green-800
+                                        {% elif value >= 5 %}bg-yellow-100 text-yellow-800
+                                        {% else %}bg-red-100 text-red-800{% endif %}">
+                                        {{ value }}%
+                                    </span>
+                                {% elif key in 'views,clicks,issues,redeems' %}
+                                    <span class="text-gray-900 font-medium">{{ value|floatformat:0 }}</span>
+                                {% else %}
+                                    <span class="text-gray-700">{{ value|default:"—" }}</span>
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="{{ rows.0.items|length }}" class="px-6 py-12 text-center text-gray-500">
+                            <div class="text-4xl mb-4">📊</div>
+                            <h3 class="text-lg font-medium mb-2">Данных не найдено</h3>
+                            <p>Попробуйте изменить параметры запроса или временной диапазон</p>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if rows %}
+        <!-- Итоги -->
+        <div class="px-6 py-3 bg-gray-50 border-t border-gray-200">
+            <p class="text-sm text-gray-600">
+                Показано записей: <strong>{{ rows|length }}</strong>
+                {% if rows|length == 500 %}
+                    <span class="text-orange-600">(максимум 500)</span>
+                {% endif %}
+            </p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Как это было посчитано -->
+<div class="mt-4 bg-blue-50 rounded-lg p-4">
+    <details class="cursor-pointer">
+        <summary class="text-sm font-medium text-blue-800 hover:text-blue-900">
+            🔍 Как это было посчитано
+        </summary>
+        <div class="mt-3 text-xs text-blue-700 space-y-2">
+            <div><strong>Спецификация запроса:</strong></div>
+            <pre class="bg-white p-2 rounded text-xs overflow-x-auto">{{ spec_json }}</pre>
+            <div class="text-xs text-blue-600">
+                <strong>Объяснение:</strong> LLM преобразовал ваш вопрос в структурированный запрос, который был безопасно выполнен через Django ORM с использованием только разрешенных таблиц и полей.
+            </div>
+        </div>
+    </details>
+</div>
+
+{% else %}
+    <div class="bg-white rounded-lg shadow p-8 text-center">
+        <div class="text-4xl mb-4">📊</div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Данных не найдено</h3>
+        <p class="text-gray-600">По вашему запросу не найдено данных. Попробуйте изменить параметры или временной период.</p>
+    </div>
+{% endif %}

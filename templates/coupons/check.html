@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}Статус купона {{ coupon.code }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-semibold mb-6">Проверка статуса купона</h1>
+    
+    <!-- Карточка купона -->
+    <div class="bg-white rounded-lg shadow-lg p-8">
+        <!-- Код купона -->
+        <div class="text-center mb-6">
+            <p class="text-sm text-gray-500 mb-2">Код купона:</p>
+            <div class="text-3xl font-mono font-bold text-gray-800 tracking-widest">
+                {{ coupon.code }}
+            </div>
+        </div>
+        
+        <!-- Статус -->
+        <div class="text-center mb-6">
+            <div class="inline-flex items-center px-4 py-2 rounded-full text-lg font-semibold {{ status_class }}
+                {% if 'green' in status_class %}bg-green-100
+                {% elif 'red' in status_class %}bg-red-100
+                {% elif 'yellow' in status_class %}bg-yellow-100
+                {% else %}bg-gray-100{% endif %}">
+                {% if 'green' in status_class %}✅
+                {% elif 'red' in status_class %}❌
+                {% elif 'yellow' in status_class %}⏰
+                {% else %}❓{% endif %}
+                {{ status_text }}
+            </div>
+        </div>
+        
+        <!-- Информация о купоне -->
+        <div class="border-t pt-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Кампания -->
+                <div>
+                    <h3 class="font-semibold text-gray-800 mb-2">Кампания</h3>
+                    <p class="text-gray-600">{{ coupon.campaign.name }}</p>
+                    {% if coupon.campaign.description %}
+                        <p class="text-sm text-gray-500 mt-1">{{ coupon.campaign.description|truncatechars:100 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Даты -->
+                <div>
+                    <h3 class="font-semibold text-gray-800 mb-2">Информация</h3>
+                    <div class="text-sm space-y-1">
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Выдан:</span>
+                            <span class="text-gray-800">{{ coupon.issued_at|date:"d.m.Y H:i" }}</span>
+                        </div>
+                        {% if coupon.expires_at %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Истекает:</span>
+                            <span class="text-gray-800">{{ coupon.expires_at|date:"d.m.Y H:i" }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Использований:</span>
+                            <span class="text-gray-800">{{ coupon.uses_count }} из {{ coupon.max_uses }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Информация о бизнесе -->
+        <div class="border-t pt-6 mt-6">
+            <h3 class="font-semibold text-gray-800 mb-3">{{ coupon.campaign.business.name }}</h3>
+            <div class="flex flex-wrap gap-4 text-sm">
+                {% if coupon.campaign.business.phone %}
+                <div class="flex items-center text-gray-600">
+                    <span class="mr-1">📞</span>
+                    <a href="tel:{{ coupon.campaign.business.phone }}" class="hover:text-blue-600">
+                        {{ coupon.campaign.business.phone }}
+                    </a>
+                </div>
+                {% endif %}
+                
+                {% if coupon.campaign.business.address %}
+                <div class="flex items-center text-gray-600">
+                    <span class="mr-1">📍</span>
+                    <span>{{ coupon.campaign.business.address }}</span>
+                </div>
+                {% endif %}
+                
+                {% if coupon.campaign.location %}
+                <div class="flex items-center text-gray-600">
+                    <span class="mr-1">🏪</span>
+                    <span>{{ coupon.campaign.location.name }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Условия использования -->
+        {% if coupon.campaign.terms %}
+        <div class="border-t pt-6 mt-6">
+            <h3 class="font-semibold text-gray-800 mb-3">Условия использования</h3>
+            <div class="text-sm text-gray-600 prose max-w-none">
+                {{ coupon.campaign.terms|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Действия -->
+        <div class="mt-8 flex flex-col sm:flex-row gap-3">
+            <a href="{% url 'campaigns:landing_public' coupon.campaign.slug %}" 
+               class="flex-1 text-center px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition-colors">
+                Перейти к предложению
+            </a>
+            
+            {% if coupon.campaign.business.phone %}
+            <a href="tel:{{ coupon.campaign.business.phone }}" 
+               class="flex-1 text-center px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors">
+                📞 Позвонить
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Справочная информация -->
+    <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                </svg>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-blue-800">Как использовать купон</h3>
+                <div class="mt-2 text-sm text-blue-700">
+                    <ul class="list-disc list-inside space-y-1">
+                        <li>Покажите код кассиру при оплате</li>
+                        <li>Или назовите код при оформлении заказа</li>
+                        <li>Убедитесь что купон активен перед использованием</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

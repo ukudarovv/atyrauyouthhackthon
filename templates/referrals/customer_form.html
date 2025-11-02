@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Новый клиент{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="mb-6">
+        <h1 class="text-2xl font-semibold mb-2">👤 Новый клиент</h1>
+        <p class="text-gray-600">Добавление клиента в базу данных</p>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-6">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Телефон -->
+                <div>
+                    <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Телефон
+                    </label>
+                    {{ form.phone }}
+                    {% if form.phone.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.phone.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Основной способ связи</p>
+                </div>
+                
+                <!-- Email -->
+                <div>
+                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Email
+                    </label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Для рассылок и уведомлений</p>
+                </div>
+            </div>
+            
+            <!-- Имя -->
+            <div>
+                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Имя
+                </label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-xs text-gray-500">Полное имя клиента</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Источник -->
+                <div>
+                    <label for="{{ form.source.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Источник
+                    </label>
+                    {{ form.source }}
+                    {% if form.source.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.source.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Откуда узнал о вас</p>
+                </div>
+                
+                <!-- Согласие на маркетинг -->
+                <div class="flex items-start pt-6">
+                    <div class="flex items-center h-5">
+                        {{ form.consent_marketing }}
+                    </div>
+                    <div class="ml-3 text-sm">
+                        <label for="{{ form.consent_marketing.id_for_label }}" class="font-medium text-gray-700">
+                            Согласие на маркетинг
+                        </label>
+                        <p class="text-gray-500">Разрешение на отправку рекламных материалов</p>
+                    </div>
+                    {% if form.consent_marketing.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.consent_marketing.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Кнопки -->
+            <div class="flex space-x-4">
+                <button type="submit" class="flex-1 py-3 px-6 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+                    💾 Сохранить клиента
+                </button>
+                <a href="{% url 'referrals:customers' %}" class="flex-1 text-center py-3 px-6 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors">
+                    ❌ Отмена
+                </a>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Справочная информация -->
+    <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                </svg>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-blue-800">Информация</h3>
+                <div class="mt-2 text-sm text-blue-700">
+                    <ul class="list-disc list-inside space-y-1">
+                        <li>Клиенты автоматически создаются при выдаче купонов</li>
+                        <li>Для создания реферальной ссылки нужен хотя бы телефон или email</li>
+                        <li>Согласие на маркетинг позволяет отправлять рекламные материалы</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

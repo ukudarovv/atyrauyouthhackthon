@@ -1,0 +1,32 @@
+{% for message in messages %}
+    <div class="mb-4 flex {% if message.role == 'user' %}justify-end{% else %}justify-start{% endif %}">
+        <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg {% if message.role == 'user' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-900{% endif %}">
+            {% if message.role == 'assistant' %}
+                <div class="flex items-start">
+                    <span class="text-lg mr-2 flex-shrink-0">🤖</span>
+                    <div class="flex-1">
+                        {% if message.content.mode == 'quick' %}
+                            <div class="text-xs text-green-600 mb-1">⚡ Быстрый ответ</div>
+                        {% elif message.content.mode == 'rule_based' %}
+                            <div class="text-xs text-blue-600 mb-1">🎯 Детерминированный ответ</div>
+                        {% elif message.content.mode == 'analytics' %}
+                            <div class="text-xs text-purple-600 mb-1">📊 Аналитика</div>
+                        {% endif %}
+                        {{ message.content.text|linebreaks|safe }}
+                    </div>
+                </div>
+            {% else %}
+                {{ message.content.text }}
+            {% endif %}
+            <div class="text-xs mt-1 {% if message.role == 'user' %}text-blue-200{% else %}text-gray-500{% endif %}">
+                {{ message.created_at|date:"H:i" }}
+            </div>
+        </div>
+    </div>
+{% empty %}
+    <div class="text-center text-gray-500 py-8">
+        <div class="text-4xl mb-4">🤖</div>
+        <h3 class="text-lg font-medium mb-2">Добро пожаловать в AI Советчик!</h3>
+        <p class="text-sm">Задайте вопрос о ваших метриках или выберите быстрый вопрос ниже.</p>
+    </div>
+{% endfor %}

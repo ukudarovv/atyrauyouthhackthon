@@ -1,0 +1,110 @@
+<div class="bg-white p-6 rounded-lg shadow">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-900">🏆 Топ кампаний</h2>
+        <div class="text-sm text-gray-500">
+            {% if rows %}
+                {{ rows|length }} кампаний
+            {% else %}
+                Нет данных
+            {% endif %}
+        </div>
+    </div>
+    
+    {% if rows %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b border-gray-200">
+                        <th class="text-left py-3 px-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Кампания
+                        </th>
+                        <th class="text-right py-3 px-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Просмотры
+                        </th>
+                        <th class="text-right py-3 px-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Клики
+                        </th>
+                        <th class="text-right py-3 px-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Выдано
+                        </th>
+                        <th class="text-right py-3 px-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Погашено
+                        </th>
+                        <th class="text-right py-3 px-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            CR К→В, %
+                        </th>
+                        <th class="text-right py-3 px-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            CR В→П, %
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for r in rows %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-3 px-2 text-sm">
+                            <div class="font-medium text-gray-900">
+                                {{ r.campaign__name|default:"(без названия)" }}
+                            </div>
+                            {% if r.campaign_id %}
+                                <div class="text-xs text-gray-500">ID: {{ r.campaign_id }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-2 text-sm text-right text-gray-900">
+                            {{ r.views }}
+                        </td>
+                        <td class="py-3 px-2 text-sm text-right text-gray-900">
+                            {{ r.clicks }}
+                        </td>
+                        <td class="py-3 px-2 text-sm text-right font-medium text-green-600">
+                            {{ r.issues }}
+                        </td>
+                        <td class="py-3 px-2 text-sm text-right font-medium text-red-600">
+                            {{ r.redeems }}
+                        </td>
+                        <td class="py-3 px-2 text-sm text-right">
+                            {% if r.cr_click_issue > 0 %}
+                                <span class="{% if r.cr_click_issue >= 10 %}text-green-600{% elif r.cr_click_issue >= 5 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                                    {{ r.cr_click_issue }}%
+                                </span>
+                            {% else %}
+                                <span class="text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-2 text-sm text-right">
+                            {% if r.cr_issue_redeem > 0 %}
+                                <span class="{% if r.cr_issue_redeem >= 50 %}text-green-600{% elif r.cr_issue_redeem >= 25 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                                    {{ r.cr_issue_redeem }}%
+                                </span>
+                            {% else %}
+                                <span class="text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Пояснения по цветам -->
+        <div class="mt-4 flex justify-center space-x-6 text-xs text-gray-500">
+            <div class="flex items-center">
+                <div class="w-2 h-2 bg-green-600 rounded mr-1"></div>
+                <span>Хорошо</span>
+            </div>
+            <div class="flex items-center">
+                <div class="w-2 h-2 bg-yellow-600 rounded mr-1"></div>
+                <span>Средне</span>
+            </div>
+            <div class="flex items-center">
+                <div class="w-2 h-2 bg-red-600 rounded mr-1"></div>
+                <span>Низко</span>
+            </div>
+        </div>
+    {% else %}
+        <div class="text-center py-12 text-gray-500">
+            <div class="text-4xl mb-4">🏆</div>
+            <h3 class="text-lg font-medium mb-2">Нет данных по кампаниям</h3>
+            <p>Создайте кампании и начните собирать аналитику</p>
+        </div>
+    {% endif %}
+</div>

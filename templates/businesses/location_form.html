@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if form.instance.pk %}Редактировать локацию{% else %}Добавить локацию{% endif %}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-semibold mb-6">
+        {% if form.instance.pk %}Редактировать локацию{% else %}Добавить локацию{% endif %}
+    </h1>
+    
+    <form method="post" class="bg-white p-6 rounded-lg shadow">
+        {% csrf_token %}
+        
+        <div class="space-y-6">
+            <!-- Название -->
+            <div>
+                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Название локации *
+                </label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Адрес -->
+            <div>
+                <label for="{{ form.address.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Адрес
+                </label>
+                {{ form.address }}
+                {% if form.address.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.address.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Широта -->
+                <div>
+                    <label for="{{ form.geo_lat.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Широта
+                    </label>
+                    {{ form.geo_lat }}
+                    {% if form.geo_lat.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.geo_lat.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Долгота -->
+                <div>
+                    <label for="{{ form.geo_lng.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Долгота
+                    </label>
+                    {{ form.geo_lng }}
+                    {% if form.geo_lng.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.geo_lng.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Режим работы -->
+            <div>
+                <label for="{{ form.opening_hours.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Режим работы
+                </label>
+                {{ form.opening_hours }}
+                <p class="mt-1 text-sm text-gray-500">
+                    JSON формат: {"mon": "09:00-18:00", "tue": "09:00-18:00", "wed": "09:00-18:00"}
+                </p>
+                {% if form.opening_hours.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.opening_hours.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Активность -->
+            <div class="flex items-center">
+                {{ form.is_active }}
+                <label for="{{ form.is_active.id_for_label }}" class="ml-2 text-sm font-medium text-gray-700">
+                    Локация активна
+                </label>
+                {% if form.is_active.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.is_active.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="mt-8 flex justify-between">
+            <a href="{% url 'businesses:locations' %}" class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">
+                Отмена
+            </a>
+            <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                {% if form.instance.pk %}Сохранить изменения{% else %}Добавить локацию{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+/* Стили для полей формы */
+form input, form select, form textarea {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    margin-top: 0.25rem;
+}
+
+form input:focus, form select:focus, form textarea:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: #3b82f6;
+    border-color: #3b82f6;
+}
+
+form input[type="checkbox"] {
+    width: auto;
+    margin-top: 0;
+}
+</style>
+{% endblock %}

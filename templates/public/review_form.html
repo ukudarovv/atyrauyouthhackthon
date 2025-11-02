@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Оставить отзыв — {{ business.name }}</title>
+  <meta name="description" content="Поделитесь впечатлениями о визите в {{ business.name }}">
+</head>
+<body class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+  <main class="bg-white rounded-2xl shadow-lg p-6 max-w-md w-full">
+    {% if invalid %}
+      <div class="text-center">
+        <div class="text-4xl mb-4">⏰</div>
+        <h1 class="text-xl font-semibold mb-2 text-gray-900">Ссылка недействительна</h1>
+        <p class="text-gray-600 mb-4">Возможно, срок действия истек или ссылка уже была использована.</p>
+        <p class="text-sm text-gray-500">Попросите у персонала новую ссылку на отзыв.</p>
+      </div>
+    {% else %}
+      <div class="text-center mb-6">
+        <div class="text-3xl mb-2">⭐</div>
+        <h1 class="text-xl font-semibold text-gray-900">Оцените визит</h1>
+        <p class="text-gray-600 text-sm">{{ business.name }}</p>
+      </div>
+      
+      <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Рейтинг -->
+        <div>
+          <label for="{{ form.rating.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+            {{ form.rating.label }} *
+          </label>
+          {{ form.rating }}
+          {% if form.rating.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.rating.errors.0 }}</p>
+          {% endif %}
+          <div class="mt-2 flex justify-between text-xs text-gray-500">
+            <span>1 - Очень плохо</span>
+            <span>5 - Отлично</span>
+          </div>
+        </div>
+        
+        <!-- Комментарий -->
+        <div>
+          <label for="{{ form.text.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+            {{ form.text.label }}
+          </label>
+          {{ form.text }}
+          {% if form.text.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.text.errors.0 }}</p>
+          {% endif %}
+          <p class="mt-1 text-xs text-gray-500">Опишите, что понравилось или что можно улучшить</p>
+        </div>
+        
+        <!-- Согласие на публикацию -->
+        <div class="flex items-start">
+          <div class="flex items-center h-5">
+            {{ form.publish_consent }}
+          </div>
+          <div class="ml-3 text-sm">
+            <label for="{{ form.publish_consent.id_for_label }}" class="font-medium text-gray-700">
+              {{ form.publish_consent.label }}
+            </label>
+            <p class="text-gray-500">Разрешаем использовать отзыв в маркетинговых материалах</p>
+          </div>
+        </div>
+        {% if form.publish_consent.errors %}
+          <p class="text-sm text-red-600">{{ form.publish_consent.errors.0 }}</p>
+        {% endif %}
+        
+        <!-- Кнопка отправки -->
+        <button type="submit" class="w-full py-3 px-6 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+          📝 Отправить отзыв
+        </button>
+      </form>
+      
+      <!-- Информация -->
+      <div class="mt-6 text-center">
+        <p class="text-xs text-gray-500">
+          Ваш отзыв поможет нам стать лучше. Спасибо! 💙
+        </p>
+      </div>
+    {% endif %}
+  </main>
+</body>
+</html>

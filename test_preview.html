@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Игровой парк — Постер A4</title>
+    <style>
+        /* Подключаем системные шрифты с поддержкой кириллицы */
+        @font-face { 
+            font-family: 'SystemFont'; 
+            src: local('Segoe UI'), local('Roboto'), local('Arial'), local('sans-serif'); 
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body { 
+            font-family: 'SystemFont', system-ui, -apple-system, sans-serif;
+            line-height: 1.4;
+            color: #1f2937;
+            background: white;
+        }
+        
+        .container {
+            width: 100%;
+            height: 100vh;
+            padding: 15mm;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20mm;
+            align-items: center;
+        }
+        
+        .content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .headline { 
+            font-size: 42pt; 
+            font-weight: 800; 
+            line-height: 1.1; 
+            color: #3B82F6; 
+            margin-bottom: 8mm;
+            word-wrap: break-word;
+        }
+        
+        .description { 
+            font-size: 16pt; 
+            color: #374151; 
+            margin-bottom: 10mm;
+            line-height: 1.5;
+        }
+        
+        .cta-button { 
+            background: #3B82F6; 
+            color: white; 
+            padding: 8pt 12pt; 
+            border-radius: 8pt; 
+            display: inline-block; 
+            font-size: 16pt;
+            font-weight: 600;
+            text-decoration: none;
+            margin-bottom: 10mm;
+            max-width: fit-content;
+        }
+        
+        .terms { 
+            font-size: 11pt; 
+            color: #6b7280; 
+            margin-top: 8mm;
+        }
+        
+        .qr-section { 
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .qr-code { 
+            width: 70mm; 
+            height: 70mm;
+            border: 2pt solid #e5e7eb;
+            border-radius: 8pt;
+            margin-bottom: 5mm;
+        }
+        
+        .qr-label {
+            font-size: 12pt;
+            font-weight: 600;
+            color: #3B82F6;
+            margin-bottom: 3mm;
+        }
+        
+        .url { 
+            font-size: 9pt; 
+            color: #6b7280; 
+            word-break: break-all;
+            text-align: center;
+            max-width: 70mm;
+        }
+        
+        .business-info {
+            position: absolute;
+            bottom: 10mm;
+            left: 15mm;
+            right: 15mm;
+            text-align: center;
+            font-size: 10pt;
+            color: #9ca3af;
+            border-top: 1pt solid #e5e7eb;
+            padding-top: 5mm;
+        }
+        
+        /* Стили для превью режима */
+        .preview-notice {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #fbbf24;
+            color: #92400e;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Hero изображение если есть */
+        .hero-image {
+            width: 100%;
+            max-height: 60mm;
+            object-fit: cover;
+            border-radius: 8pt;
+            margin-bottom: 8mm;
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="preview-notice">
+        🖼️ HTML Превью постера Игровой парк
+    </div>
+    
+    
+    <div class="container">
+        <!-- Основной контент -->
+        <div class="content">
+            <!-- Hero изображение -->
+            
+            
+            <!-- Заголовок -->
+            <h1 class="headline">
+                Эксклюзивное предложение: Игровой парк
+            </h1>
+            
+            <!-- Описание -->
+            <div class="description">
+                
+                    Откройте для себя мир игровой парк премиум-класса. Каждая деталь продумана до мелочей, чтобы обеспечить вам непревзойденное качество и исключительный опыт.
+                
+            </div>
+            
+            <!-- Кнопка призыва к действию -->
+            <div class="cta-button">
+                Оформить
+            </div>
+            
+            <!-- Условия -->
+            <div class="terms">
+                
+                    Действует с 11.08.2025 по 24.08.2025
+                
+                
+                
+                    <br>Количество ограничено: 100 купонов
+                
+                
+                
+                    <br>Не более 1 на номер телефона
+                
+            </div>
+        </div>
+        
+        <!-- QR-код секция -->
+        <div class="qr-section">
+            <div class="qr-label">Сканируйте QR-код</div>
+            <img class="qr-code" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQAAAABTUiuoAAACJUlEQVR4nO1aQYrkMAwsqQN9dH4wT0l+sG+an8VP2QcsxMeGBC2SFRgWGnzZjXesOnQnTh0KhKySZRI0InMrEwgqBxVBbQYHFUFtBgcVCnJMoBUn0apra7mW1560NoG/NXURxa5mgp7VeMiGh61KZ1pbwN+bWjyFRPaTkGuWWdJN3WltAA9DfYhs6UX3CXgHxujU6Y93DRKJhoy608rDUyf/T1qdilaw7Zyw7IDoq/SklYMKQzbvN+tjeQqt5XKHis60YvTckq9LJwHpuPLtbwvgoKId4h5dvQUe9anuhJt+XuRwf7/drpWHp072K/nHDkLShstSrQC07DMkz7+60cpBRUUhEvlJhEVehDwD8jlrqhVvltGP1tF3QsNVrWzrO3wnRKofJXZCdEPNlx304lUm1OKlp1FxTtgbtWgBSy89fjrJ0spjZBaxL62juwzSoEhevVe2+IjmG3051eC7tfLwVHhVUjdYjXoSqb7dK1jUrf76raThsRFJrVbWeXm/FdHqiyoaHhE5QPThP5ZWfhDVk9Ym8BizY1GDUTdGcx5Z49aV1ibwGLNjqnlU9CzX6pYOJ/vSOjAVtW5pb4VFt8OaW+YyDCnqVs/UdOgFmqe7w9qI/VMBb8HvPw1KJbuc8flxTfrVE4bL6HZ2DDWByw7tiS1il5fH7Vp5eCq836rw0Zab93qfxprlqFtdREtvzLQh366Vg4qgNoODiqA2g4OK/4f6G6dzIoRIMtpbAAAAAElFTkSuQmCC" alt="QR Code">
+            <div class="url">http://localhost:8000/test/</div>
+        </div>
+    </div>
+    
+    <!-- Информация о бизнесе -->
+    <div class="business-info">
+        Test
+        
+        
+    </div>
+</body>
+</html>

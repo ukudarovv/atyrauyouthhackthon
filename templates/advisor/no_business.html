@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Советчик - Бизнес не выбран{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="bg-white shadow rounded-lg p-8 text-center">
+        <div class="text-6xl mb-4">🏢</div>
+        <h1 class="text-2xl font-bold text-gray-900 mb-4">Бизнес не выбран</h1>
+        <p class="text-gray-600 mb-6">
+            Для работы с AI Советчиком необходимо выбрать бизнес. 
+            Пожалуйста, создайте или выберите бизнес в верхнем меню.
+        </p>
+        <div class="space-x-4">
+            <a href="{% url 'businesses:list' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                🏢 Управление бизнесами
+            </a>
+            <a href="{% url 'home' %}" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors">
+                🏠 На главную
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

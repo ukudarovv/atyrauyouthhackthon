@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+
+{% block title %}Сегменты клиентов{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-semibold">🎯 Сегменты клиентов</h1>
+            <p class="text-gray-600">RFM анализ и персонализированные предложения</p>
+        </div>
+        <a href="{% url 'segments:new' %}" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+            ➕ Создать сегмент
+        </a>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="bg-white rounded-lg shadow p-4 mb-6">
+        <form method="get" class="flex flex-wrap gap-4 items-end">
+            <div>
+                <label for="kind" class="block text-sm font-medium text-gray-700 mb-1">
+                    Тип сегмента
+                </label>
+                <select name="kind" id="kind" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Все</option>
+                    <option value="system" {% if current_kind == 'system' %}selected{% endif %}>🤖 Системные</option>
+                    <option value="custom" {% if current_kind == 'custom' %}selected{% endif %}>👤 Пользовательские</option>
+                </select>
+            </div>
+            
+            <div>
+                <label for="enabled" class="block text-sm font-medium text-gray-700 mb-1">
+                    Статус
+                </label>
+                <select name="enabled" id="enabled" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Все</option>
+                    <option value="1" {% if current_enabled == '1' %}selected{% endif %}>✅ Активные</option>
+                    <option value="0" {% if current_enabled == '0' %}selected{% endif %}>❌ Отключенные</option>
+                </select>
+            </div>
+            
+            <div class="flex space-x-2">
+                <button type="submit" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+                    🔍 Фильтр
+                </button>
+                <a href="{% url 'segments:list' %}" class="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50">
+                    ✖️ Сбросить
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Сегменты -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {% for item in segments_data %}
+            {% with segment=item.segment insights=item.insights %}
+                <div class="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
+                    <!-- Заголовок сегмента -->
+                    <div class="p-4 border-b border-gray-200">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <div class="w-3 h-3 rounded-full" style="background-color: {{ segment.color }}"></div>
+                                    <h3 class="font-medium text-gray-900">{{ segment.name }}</h3>
+                                    {% if not segment.enabled %}
+                                        <span class="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">Отключен</span>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="flex items-center space-x-3 text-sm text-gray-600">
+                                    <span>{{ segment.kind_display }}</span>
+                                    <span class="text-2xl font-bold text-blue-600">{{ insights.size|default:0 }}</span>
+                                    <span>клиентов</span>
+                                </div>
+                            </div>
+                            
+                            {% if segment.is_stale %}
+                                <span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded" title="Требует обновления">
+                                    ⚠️ Устарел
+                                </span>
+                            {% endif %}
+                        </div>
+                        
+                        {% if segment.description %}
+                            <p class="text-sm text-gray-600 mt-2">{{ segment.description }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Статистика -->
+                    {% if insights.size > 0 %}
+                        <div class="p-4 border-b border-gray-200">
+                            <div class="grid grid-cols-3 gap-4 text-center">
+                                <div>
+                                    <div class="text-lg font-semibold text-green-600">{{ insights.avg_rfm.r }}</div>
+                                    <div class="text-xs text-gray-500">Recency</div>
+                                </div>
+                                <div>
+                                    <div class="text-lg font-semibold text-blue-600">{{ insights.avg_rfm.f }}</div>
+                                    <div class="text-xs text-gray-500">Frequency</div>
+                                </div>
+                                <div>
+                                    <div class="text-lg font-semibold text-purple-600">{{ insights.avg_rfm.m }}</div>
+                                    <div class="text-xs text-gray-500">Monetary</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3 text-center">
+                                <div class="text-sm text-gray-600">
+                                    Средняя давность: <strong>{{ insights.avg_recency|floatformat:0 }} дн.</strong>
+                                </div>
+                                <div class="text-sm text-gray-600">
+                                    Общий LTV: <strong>{{ insights.total_ltv|floatformat:0 }} ₸</strong>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Превью участников -->
+                    {% if segment.preview %}
+                        <div class="p-3 bg-gray-50 border-b border-gray-200">
+                            <div class="text-xs text-gray-500 mb-1">Превью участников:</div>
+                            <div class="flex flex-wrap gap-1">
+                                {% for phone in segment.preview %}
+                                    <span class="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded">{{ phone }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Рекомендации NBP -->
+                    {% if insights.recommendations %}
+                        <div class="p-3 bg-blue-50 border-b border-gray-200">
+                            <div class="text-xs font-medium text-blue-800 mb-1">💡 Next Best Promo:</div>
+                            <div class="text-xs text-blue-700">
+                                <strong>{{ insights.recommendations.discount }}</strong> на {{ insights.recommendations.duration_days }} дн.
+                            </div>
+                            <div class="text-xs text-blue-600 mt-1">
+                                "{{ insights.recommendations.cta }}"
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Действия -->
+                    <div class="p-4">
+                        <div class="flex justify-between items-center">
+                            <div class="text-xs text-gray-500">
+                                {% if segment.last_built_at %}
+                                    Обновлен: {{ segment.last_built_at|date:"d.m H:i" }}
+                                {% else %}
+                                    Не построен
+                                {% endif %}
+                            </div>
+                            
+                            <div class="flex space-x-2">
+                                <a href="{% url 'segments:preview' segment.id %}" 
+                                   class="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                                   onclick="previewSegment({{ segment.id }}); return false;">
+                                    👁️ Превью
+                                </a>
+                                
+                                <a href="{% url 'segments:rebuild' segment.id %}" 
+                                   class="text-sm text-green-600 hover:text-green-800 hover:underline">
+                                    🔄 Обновить
+                                </a>
+                                
+                                {% if segment.kind != 'system' %}
+                                    <a href="{% url 'segments:edit' segment.id %}" 
+                                       class="text-sm text-gray-600 hover:text-gray-800 hover:underline">
+                                        ✏️ Править
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'segments:edit' segment.id %}" 
+                                       class="text-sm text-gray-400 hover:text-gray-600 hover:underline">
+                                        👁️ Смотреть
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endwith %}
+        {% empty %}
+            <div class="col-span-full">
+                <div class="bg-white rounded-lg shadow p-8 text-center">
+                    <div class="text-4xl mb-4">🎯</div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Сегментов не найдено</h3>
+                    <p class="text-gray-600 mb-4">Создайте первый сегмент для анализа ваших клиентов</p>
+                    <a href="{% url 'segments:new' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        ➕ Создать сегмент
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Пагинация -->
+    {% if page_obj.has_other_pages %}
+        <div class="mt-6 flex justify-center">
+            <nav class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                       class="px-3 py-2 text-sm bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50">
+                        ← Предыдущая
+                    </a>
+                {% endif %}
+                
+                <span class="px-3 py-2 text-sm bg-blue-50 border border-blue-200 text-blue-700 rounded">
+                    {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                       class="px-3 py-2 text-sm bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50">
+                        Следующая →
+                    </a>
+                {% endif %}
+            </nav>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Модальное окно превью -->
+<div id="previewModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-96 overflow-hidden">
+            <div class="p-4 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-medium">Превью сегмента</h3>
+                    <button onclick="closePreview()" class="text-gray-400 hover:text-gray-600">✖️</button>
+                </div>
+            </div>
+            <div id="previewContent" class="p-4 overflow-y-auto max-h-80">
+                <!-- Контент загружается через AJAX -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function previewSegment(segmentId) {
+    document.getElementById('previewModal').classList.remove('hidden');
+    document.getElementById('previewContent').innerHTML = '<div class="text-center py-4">Загрузка...</div>';
+    
+    fetch(`/app/segments/${segmentId}/preview/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                let html = `<div class="mb-4"><strong>Найдено клиентов: ${data.count}</strong></div>`;
+                
+                if (data.customers.length > 0) {
+                    html += '<div class="space-y-2">';
+                    data.customers.forEach(customer => {
+                        html += `
+                            <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                                <span class="font-mono">${customer.phone_masked}</span>
+                                <div class="text-sm text-gray-600">
+                                    R${customer.r_score}F${customer.f_score}M${customer.m_score} | 
+                                    ${customer.redeems_count} погаш. | 
+                                    ${customer.recency_days} дн.
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                } else {
+                    html += '<div class="text-gray-500">Клиенты не найдены</div>';
+                }
+                
+                document.getElementById('previewContent').innerHTML = html;
+            } else {
+                document.getElementById('previewContent').innerHTML = `<div class="text-red-600">Ошибка: ${data.error}</div>`;
+            }
+        })
+        .catch(error => {
+            document.getElementById('previewContent').innerHTML = `<div class="text-red-600">Ошибка загрузки: ${error}</div>`;
+        });
+}
+
+function closePreview() {
+    document.getElementById('previewModal').classList.add('hidden');
+}
+
+// Закрытие модального окна по клику вне его
+document.getElementById('previewModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closePreview();
+    }
+});
+</script>
+{% endblock %}

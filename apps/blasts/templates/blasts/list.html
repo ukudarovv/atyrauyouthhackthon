@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+
+{% block title %}Омниканальные рассылки{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-semibold">📧 Омниканальные рассылки</h1>
+            <p class="text-gray-600">{{ business.name }}</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'blasts:template_list' %}" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                📝 Шаблоны
+            </a>
+            <a href="{% url 'blasts:contact_list' %}" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                📞 Контакты
+            </a>
+            <a href="{% url 'blasts:create' %}" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                ➕ Создать рассылку
+            </a>
+        </div>
+    </div>
+
+    <!-- Статистика -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white p-6 rounded-lg shadow">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <span class="text-blue-600 text-sm font-medium">📧</span>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Всего рассылок</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.total_blasts }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <span class="text-green-600 text-sm font-medium">🚀</span>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Активных</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.running_blasts }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <span class="text-gray-600 text-sm font-medium">✅</span>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Завершенных</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.completed_blasts }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <span class="text-purple-600 text-sm font-medium">📊</span>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Отправлено</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.total_sent|floatformat:0 }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="bg-white p-4 rounded-lg shadow mb-6">
+        <form method="get" class="flex flex-wrap gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Статус</label>
+                <select name="status" class="border border-gray-300 rounded px-3 py-2">
+                    <option value="">Все статусы</option>
+                    {% for status_code, status_name in status_choices %}
+                    <option value="{{ status_code }}" {% if status_filter == status_code %}selected{% endif %}>
+                        {{ status_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Триггер</label>
+                <select name="trigger" class="border border-gray-300 rounded px-3 py-2">
+                    <option value="">Все триггеры</option>
+                    {% for trigger_code, trigger_name in trigger_choices %}
+                    <option value="{{ trigger_code }}" {% if trigger_filter == trigger_code %}selected{% endif %}>
+                        {{ trigger_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Поиск</label>
+                <input type="text" name="search" value="{{ search }}" placeholder="Название или описание" 
+                       class="border border-gray-300 rounded px-3 py-2">
+            </div>
+            
+            <div class="flex items-end">
+                <button type="submit" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+                    Фильтровать
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Список рассылок -->
+    <div class="bg-white rounded-lg shadow">
+        {% if page_obj.object_list %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Рассылка
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Статус
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Получатели
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Доставляемость
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Стоимость
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Создана
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Действия
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for blast in page_obj.object_list %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">
+                                    <a href="{% url 'blasts:detail' blast.pk %}" class="hover:text-blue-600">
+                                        {{ blast.name }}
+                                    </a>
+                                </div>
+                                <div class="text-sm text-gray-500">{{ blast.get_trigger_display }}</div>
+                                {% if blast.segment %}
+                                <div class="text-xs text-blue-600">Сегмент: {{ blast.segment.name }}</div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                {% if blast.status == 'running' %}bg-green-100 text-green-800
+                                {% elif blast.status == 'completed' %}bg-gray-100 text-gray-800
+                                {% elif blast.status == 'draft' %}bg-yellow-100 text-yellow-800
+                                {% elif blast.status == 'paused' %}bg-orange-100 text-orange-800
+                                {% elif blast.status == 'cancelled' %}bg-red-100 text-red-800
+                                {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                {{ blast.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <div>{{ blast.total_recipients }} получателей</div>
+                            <div class="text-xs text-gray-500">{{ blast.sent_count }} отправлено</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if blast.sent_count > 0 %}
+                                {{ blast.delivery_rate|floatformat:1 }}%
+                                <div class="text-xs text-gray-500">
+                                    {{ blast.delivered_count }}/{{ blast.sent_count }}
+                                </div>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${{ blast.current_cost|floatformat:2 }}
+                            {% if blast.budget_cap %}
+                            <div class="text-xs text-gray-500">
+                                из ${{ blast.budget_cap|floatformat:0 }}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ blast.created_at|date:"d.m.Y H:i" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex space-x-2">
+                                <a href="{% url 'blasts:detail' blast.pk %}" class="text-blue-600 hover:text-blue-900">
+                                    Подробнее
+                                </a>
+                                {% if blast.can_start %}
+                                <form method="post" action="{% url 'blasts:start' blast.pk %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="text-green-600 hover:text-green-900">
+                                        Запустить
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Пагинация -->
+        {% if page_obj.has_other_pages %}
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200">
+            <div class="flex-1 flex justify-between">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&status={{ status_filter }}&trigger={{ trigger_filter }}&search={{ search }}" 
+                   class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Назад
+                </a>
+                {% endif %}
+                
+                <span class="text-sm text-gray-700">
+                    Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&status={{ status_filter }}&trigger={{ trigger_filter }}&search={{ search }}" 
+                   class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Вперед
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="p-6 text-center">
+            <div class="text-4xl mb-4">📧</div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Пока нет рассылок</h3>
+            <p class="text-gray-500 mb-4">Создайте первую омниканальную рассылку</p>
+            <a href="{% url 'blasts:create' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                Создать рассылку
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

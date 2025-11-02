@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Аналитика{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-semibold">📊 Аналитика</h1>
+            <p class="text-gray-600">Метрики и статистика по кампаниям</p>
+        </div>
+    </div>
+
+    <!-- Фильтры -->
+    <form id="filter-form" class="bg-white p-4 rounded-lg shadow mb-6" hx-trigger="submit">
+        <div class="flex flex-wrap gap-4 items-end">
+            <!-- Период -->
+            <div>
+                <label for="{{ dr.start.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    {{ dr.start.label }}
+                </label>
+                {{ dr.start }}
+            </div>
+            
+            <div>
+                <label for="{{ dr.end.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    {{ dr.end.label }}
+                </label>
+                {{ dr.end }}
+            </div>
+            
+            <!-- Кампания -->
+            <div>
+                <label for="{{ cf.campaign.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    {{ cf.campaign.label }}
+                </label>
+                {{ cf.campaign }}
+            </div>
+            
+            <!-- Кнопка применения -->
+            <div>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    🔍 Применить
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Карточки метрик -->
+    <div 
+        id="cards"
+        hx-get="{% url 'analytics:cards_partial' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+        hx-trigger="load, submit from:#filter-form"
+        hx-target="#cards"
+        hx-include="#filter-form"
+        class="mb-6">
+        <!-- Загрузка... -->
+        <div class="grid md:grid-cols-3 gap-4">
+            {% for i in "123456" %}
+            <div class="bg-white p-4 rounded-lg shadow animate-pulse">
+                <div class="h-4 bg-gray-200 rounded mb-2"></div>
+                <div class="h-8 bg-gray-200 rounded"></div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- График временных рядов -->
+    <div 
+        id="series"
+        hx-get="{% url 'analytics:series_partial' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+        hx-trigger="load, submit from:#filter-form"
+        hx-target="#series"
+        hx-include="#filter-form"
+        class="mb-6">
+        <!-- Загрузка... -->
+        <div class="bg-white p-4 rounded-lg shadow animate-pulse">
+            <div class="h-6 bg-gray-200 rounded mb-4 w-48"></div>
+            <div class="h-64 bg-gray-200 rounded"></div>
+        </div>
+    </div>
+
+    <!-- Топ кампаний -->
+    <div 
+        id="top-campaigns"
+        hx-get="{% url 'analytics:top_campaigns_partial' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+        hx-trigger="load, submit from:#filter-form"
+        hx-target="#top-campaigns"
+        hx-include="#filter-form"
+        class="mb-6">
+        <!-- Загрузка... -->
+        <div class="bg-white p-4 rounded-lg shadow animate-pulse">
+            <div class="h-6 bg-gray-200 rounded mb-4 w-32"></div>
+            <div class="space-y-3">
+                {% for i in "12345" %}
+                <div class="flex space-x-4">
+                    {% for j in "1234567" %}
+                    <div class="h-4 bg-gray-200 rounded flex-1"></div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- HTMX -->
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+<script>
+// Обновляем URL при изменении фильтров
+document.getElementById('filter-form').addEventListener('htmx:configRequest', function(evt) {
+    const formData = new FormData(evt.detail.target);
+    const params = new URLSearchParams(formData);
+    const newUrl = window.location.pathname + '?' + params.toString();
+    history.replaceState(null, '', newUrl);
+});
+</script>
+{% endblock %}

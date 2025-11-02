@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Приглашение</title>
+</head>
+<body class="min-h-screen bg-gray-50 flex items-center justify-center">
+  <main class="bg-white rounded-2xl shadow p-6 max-w-md w-full text-center">
+    <div class="text-4xl mb-4">🎉</div>
+    <h1 class="text-2xl font-bold mb-2">Вас пригласили!</h1>
+    <p class="text-gray-600 mb-4">Откройте любую активную акцию бизнеса <strong>{{ ref.business.name }}</strong>, чтобы получить купон.</p>
+    <div class="text-sm text-gray-500 mb-4">
+      Приглашение от: {{ ref.referrer.name|default:ref.referrer.phone }}
+    </div>
+    <a href="/" class="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+      На главную
+    </a>
+  </main>
+</body>
+</html>

@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+
+{% block title %}Журнал погашений{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-semibold">📋 Журнал погашений</h1>
+            <p class="text-gray-600">Всего записей: {{ total_count }}</p>
+        </div>
+        <a href="{% url 'redemptions:redeem' %}" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+            💳 Погасить купон
+        </a>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="bg-white rounded-lg shadow p-4 mb-6">
+        <form method="get" class="flex flex-wrap gap-4 items-end">
+            <!-- Поиск -->
+            <div class="flex-1 min-w-64">
+                <label for="search" class="block text-sm font-medium text-gray-700 mb-1">
+                    Поиск по коду, чеку или комментарию
+                </label>
+                <input type="text" name="search" id="search" value="{{ search_query }}" 
+                       placeholder="Введите для поиска..."
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            
+            <!-- Кампания -->
+            <div class="min-w-48">
+                <label for="campaign" class="block text-sm font-medium text-gray-700 mb-1">
+                    Кампания
+                </label>
+                <select name="campaign" id="campaign" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Все кампании</option>
+                    {% for campaign in campaigns %}
+                        <option value="{{ campaign.id }}" {% if current_campaign == campaign.id|stringformat:"s" %}selected{% endif %}>
+                            {{ campaign.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Кнопки -->
+            <div class="flex space-x-2">
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    🔍 Найти
+                </button>
+                <a href="{% url 'redemptions:list' %}" class="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50">
+                    ✖️ Сбросить
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Таблица -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Время погашения
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Код купона
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Кампания
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Кассир
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Сумма
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Чек/Комментарий
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for redemption in page_obj.object_list %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ redemption.redeemed_at|date:"d.m.Y H:i" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
+                                {{ redemption.coupon.code }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            <div class="max-w-48 truncate" title="{{ redemption.coupon.campaign.name }}">
+                                {{ redemption.coupon.campaign.name }}
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                {{ redemption.coupon.campaign.business.name }}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ redemption.cashier.username }}
+                            <div class="text-xs text-gray-500">
+                                {{ redemption.cashier.get_role_display }}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if redemption.amount %}
+                                {{ redemption.amount }} ₸
+                            {% else %}
+                                <span class="text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            {% if redemption.pos_ref %}
+                                <div class="font-medium">{{ redemption.pos_ref }}</div>
+                            {% endif %}
+                            {% if redemption.note %}
+                                <div class="text-gray-600 text-xs">{{ redemption.note }}</div>
+                            {% endif %}
+                            {% if not redemption.pos_ref and not redemption.note %}
+                                <span class="text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                            <div class="text-4xl mb-4">📋</div>
+                            <h3 class="text-lg font-medium mb-2">Нет записей</h3>
+                            <p>Погашенные купоны будут отображаться здесь</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Пагинация -->
+        {% if page_obj.has_other_pages %}
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div class="flex-1 flex justify-between sm:hidden">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_campaign %}&campaign={{ current_campaign }}{% endif %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Предыдущая
+                    </a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_campaign %}&campaign={{ current_campaign }}{% endif %}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Следующая
+                    </a>
+                {% endif %}
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Показано
+                        <span class="font-medium">{{ page_obj.start_index }}</span>
+                        -
+                        <span class="font-medium">{{ page_obj.end_index }}</span>
+                        из
+                        <span class="font-medium">{{ page_obj.paginator.count }}</span>
+                        записей
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_campaign %}&campaign={{ current_campaign }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                ←
+                            </a>
+                        {% endif %}
+                        
+                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">
+                            {{ page_obj.number }}
+                        </span>
+                        
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_campaign %}&campaign={{ current_campaign }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                →
+                            </a>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

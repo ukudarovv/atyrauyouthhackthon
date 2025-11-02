@@ -1,0 +1,336 @@
+{% extends 'base.html' %}
+
+{% block title %}Создать рассылку{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-semibold">📧 Создать рассылку</h1>
+            <p class="text-gray-600">{{ business.name }}</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'blasts:list' %}" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                ← Назад к списку
+            </a>
+        </div>
+    </div>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Основная информация -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-medium mb-4">📋 Основная информация</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+                        Название рассылки *
+                    </label>
+                    <input type="text" 
+                           id="name" 
+                           name="name" 
+                           required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Например: Летняя акция">
+                </div>
+                
+                <div>
+                    <label for="trigger" class="block text-sm font-medium text-gray-700 mb-1">
+                        Тип запуска
+                    </label>
+                    <select id="trigger" 
+                            name="trigger"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        {% for trigger_code, trigger_name in trigger_choices %}
+                        <option value="{{ trigger_code }}" {% if trigger_code == 'manual' %}selected{% endif %}>
+                            {{ trigger_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
+                    Описание
+                </label>
+                <textarea id="description" 
+                          name="description" 
+                          rows="3"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Краткое описание цели рассылки"></textarea>
+            </div>
+        </div>
+
+        <!-- Аудитория -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-medium mb-4">🎯 Аудитория</h3>
+            
+            <div>
+                <label for="segment_id" class="block text-sm font-medium text-gray-700 mb-1">
+                    Сегмент получателей
+                </label>
+                <select id="segment_id" 
+                        name="segment_id"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Все клиенты</option>
+                    {% for segment in segments %}
+                    <option value="{{ segment.id }}">
+                        {{ segment.name }} ({{ segment.size_cached|default:"?" }} чел.)
+                    </option>
+                    {% endfor %}
+                </select>
+                <p class="text-xs text-gray-500 mt-1">
+                    Выберите сегмент или оставьте пустым для отправки всем клиентам
+                </p>
+            </div>
+        </div>
+
+        <!-- Каскад каналов -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-medium mb-4">📱 Каскад каналов</h3>
+            <p class="text-sm text-gray-600 mb-4">
+                Выберите каналы и порядок их использования. Если сообщение не доставлено или не прочитано через указанное время, система перейдет к следующему каналу.
+            </p>
+            
+            <div id="cascade-channels" class="space-y-4">
+                <!-- WhatsApp -->
+                <div class="flex items-center space-x-4 p-3 border rounded">
+                    <input type="checkbox" 
+                           id="channel_whatsapp" 
+                           name="channels" 
+                           value="whatsapp"
+                           checked
+                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <label for="channel_whatsapp" class="flex-1">
+                        <span class="font-medium">📱 WhatsApp</span>
+                        <span class="text-sm text-gray-500 block">Высокий открываемость, быстрая доставка</span>
+                    </label>
+                    <div class="flex items-center space-x-2">
+                        <label class="text-sm text-gray-600">Timeout:</label>
+                        <input type="number" 
+                               name="timeout_whatsapp" 
+                               value="60"
+                               min="0"
+                               max="1440"
+                               class="w-16 px-2 py-1 border border-gray-300 rounded text-center">
+                        <span class="text-sm text-gray-500">мин</span>
+                    </div>
+                </div>
+
+                <!-- SMS -->
+                <div class="flex items-center space-x-4 p-3 border rounded">
+                    <input type="checkbox" 
+                           id="channel_sms" 
+                           name="channels" 
+                           value="sms"
+                           checked
+                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <label for="channel_sms" class="flex-1">
+                        <span class="font-medium">📱 SMS</span>
+                        <span class="text-sm text-gray-500 block">Универсальный, доступен всем</span>
+                    </label>
+                    <div class="flex items-center space-x-2">
+                        <label class="text-sm text-gray-600">Timeout:</label>
+                        <input type="number" 
+                               name="timeout_sms" 
+                               value="180"
+                               min="0"
+                               max="1440"
+                               class="w-16 px-2 py-1 border border-gray-300 rounded text-center">
+                        <span class="text-sm text-gray-500">мин</span>
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div class="flex items-center space-x-4 p-3 border rounded">
+                    <input type="checkbox" 
+                           id="channel_email" 
+                           name="channels" 
+                           value="email"
+                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <label for="channel_email" class="flex-1">
+                        <span class="font-medium">📧 Email</span>
+                        <span class="text-sm text-gray-500 block">Подробные сообщения, низкая стоимость</span>
+                    </label>
+                    <div class="flex items-center space-x-2">
+                        <label class="text-sm text-gray-600">Timeout:</label>
+                        <input type="number" 
+                               name="timeout_email" 
+                               value="0"
+                               min="0"
+                               max="1440"
+                               class="w-16 px-2 py-1 border border-gray-300 rounded text-center">
+                        <span class="text-sm text-gray-500">мин</span>
+                    </div>
+                </div>
+
+                <!-- Telegram -->
+                <div class="flex items-center space-x-4 p-3 border rounded">
+                    <input type="checkbox" 
+                           id="channel_telegram" 
+                           name="channels" 
+                           value="telegram"
+                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <label for="channel_telegram" class="flex-1">
+                        <span class="font-medium">💬 Telegram</span>
+                        <span class="text-sm text-gray-500 block">Мгновенная доставка, богатые медиа</span>
+                    </label>
+                    <div class="flex items-center space-x-2">
+                        <label class="text-sm text-gray-600">Timeout:</label>
+                        <input type="number" 
+                               name="timeout_telegram" 
+                               value="30"
+                               min="0"
+                               max="1440"
+                               class="w-16 px-2 py-1 border border-gray-300 rounded text-center">
+                        <span class="text-sm text-gray-500">мин</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Планирование и бюджет -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-medium mb-4">⏰ Планирование и бюджет</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="schedule_at" class="block text-sm font-medium text-gray-700 mb-1">
+                        Запланировать на время
+                    </label>
+                    <input type="datetime-local" 
+                           id="schedule_at" 
+                           name="schedule_at"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <p class="text-xs text-gray-500 mt-1">
+                        Оставьте пустым для ручного запуска
+                    </p>
+                </div>
+                
+                <div>
+                    <label for="budget_cap" class="block text-sm font-medium text-gray-700 mb-1">
+                        Лимит бюджета ($)
+                    </label>
+                    <input type="number" 
+                           id="budget_cap" 
+                           name="budget_cap"
+                           min="0"
+                           step="0.01"
+                           placeholder="100.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <p class="text-xs text-gray-500 mt-1">
+                        Максимальная стоимость всей рассылки
+                    </p>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <label for="max_cost_per_recipient" class="block text-sm font-medium text-gray-700 mb-1">
+                    Лимит на получателя ($)
+                </label>
+                <input type="number" 
+                       id="max_cost_per_recipient" 
+                       name="max_cost_per_recipient"
+                       value="10"
+                       min="0"
+                       step="0.01"
+                       class="w-full md:w-48 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <p class="text-xs text-gray-500 mt-1">
+                    Максимальная стоимость на одного получателя
+                </p>
+            </div>
+        </div>
+
+        <!-- Дополнительные настройки -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-medium mb-4">⚙️ Дополнительные настройки</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Условия остановки каскада
+                    </label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" 
+                                   name="stop_on_delivered_and_clicked" 
+                                   checked
+                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <span class="ml-2 text-sm text-gray-700">Остановить после доставки и клика</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" 
+                                   name="stop_on_redeemed"
+                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <span class="ml-2 text-sm text-gray-700">Остановить после погашения купона</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Тихие часы
+                    </label>
+                    <div class="flex items-center space-x-4">
+                        <div>
+                            <input type="time" 
+                                   name="quiet_hours_start" 
+                                   value="21:00"
+                                   class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <span class="text-gray-500">—</span>
+                        <div>
+                            <input type="time" 
+                                   name="quiet_hours_end" 
+                                   value="09:00"
+                                   class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">
+                        Время, когда сообщения не отправляются
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Кнопки -->
+        <div class="flex justify-end space-x-3">
+            <a href="{% url 'blasts:list' %}" 
+               class="px-6 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50">
+                Отмена
+            </a>
+            <button type="submit" 
+                    class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                Создать рассылку
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+// Показать/скрыть поля timeout в зависимости от выбранных каналов
+document.addEventListener('DOMContentLoaded', function() {
+    const channelCheckboxes = document.querySelectorAll('input[name="channels"]');
+    
+    channelCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const timeoutInput = document.querySelector(`input[name="timeout_${this.value}"]`);
+            if (timeoutInput) {
+                timeoutInput.disabled = !this.checked;
+                if (!this.checked) {
+                    timeoutInput.value = 0;
+                }
+            }
+        });
+    });
+    
+    // Инициализация
+    channelCheckboxes.forEach(checkbox => {
+        checkbox.dispatchEvent(new Event('change'));
+    });
+});
+</script>
+{% endblock %}

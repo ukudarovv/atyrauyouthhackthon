@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="{{ request.LANGUAGE_CODE|default:'ru' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}POS System{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center space-x-6">
+                    <h1 class="text-xl font-semibold">POS System</h1>
+                    {% if user.is_authenticated %}
+                        <!-- Основная навигация -->
+                        <nav class="hidden lg:flex items-center space-x-6">
+                            <!-- Главная -->
+                            <a href="{% url 'home' %}" class="flex items-center space-x-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors border border-blue-200">
+                                <span class="text-lg">🏠</span>
+                                <span class="text-sm font-medium">Главная</span>
+                            </a>
+                            
+                            <!-- Разделитель -->
+                            <div class="w-px h-4 bg-gray-300"></div>
+                            
+                            <!-- Основные разделы -->
+                            <div class="flex items-center space-x-4">
+                                <a href="{% url 'businesses:list' %}" class="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
+                                    Бизнесы
+                                </a>
+                                <a href="{% url 'campaigns:list' %}" class="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
+                                    Кампании
+                                </a>
+                            </div>
+                            
+                            <!-- Разделитель -->
+                            <div class="w-px h-4 bg-gray-300"></div>
+                            
+                            <!-- Клиенты и данные -->
+                            <div class="flex items-center space-x-3">
+                                <a href="{% url 'referrals:customers' %}" class="text-lg hover:text-blue-600 transition-colors" title="Клиенты">
+                                    👥
+                                </a>
+                                <a href="{% url 'segments:list' %}" class="text-lg hover:text-blue-600 transition-colors" title="Сегменты">
+                                    🎯
+                                </a>
+                                <a href="{% url 'reviews:list' %}" class="text-lg hover:text-blue-600 transition-colors" title="Отзывы">
+                                    ⭐
+                                </a>
+                            </div>
+                            
+                            <!-- Разделитель -->
+                            <div class="w-px h-4 bg-gray-300"></div>
+                            
+                            <!-- Аналитика и интеграции -->
+                            <div class="flex items-center space-x-3">
+                                <a href="{% url 'analytics:dashboard' %}" class="text-lg hover:text-blue-600 transition-colors" title="Аналитика">
+                                    📊
+                                </a>
+                                <a href="{% url 'integrations_ig:dashboard' %}" class="text-lg hover:text-blue-600 transition-colors" title="Instagram">
+                                    📸
+                                </a>
+                                <a href="{% url 'wallet:dashboard' %}" class="text-lg hover:text-blue-600 transition-colors" title="Google Wallet">
+                                    📱
+                                </a>
+                                <a href="{% url 'blasts:list' %}" class="text-lg hover:text-blue-600 transition-colors" title="Рассылки">
+                                    📧
+                                </a>
+                                <a href="{% url 'fraud:list' %}" class="text-lg hover:text-blue-600 transition-colors" title="Антифрод">
+                                    🛡️
+                                </a>
+                            </div>
+                            
+                            <!-- Разделитель -->
+                            <div class="w-px h-4 bg-gray-300"></div>
+                            
+                            <!-- Операции -->
+                            <div class="flex items-center space-x-3">
+                                <a href="{% url 'redemptions:redeem' %}" class="px-3 py-1.5 bg-green-100 text-green-700 text-sm rounded-md hover:bg-green-200 transition-colors font-medium">
+                                    💳 Погасить
+                                </a>
+                                <a href="{% url 'redemptions:list' %}" class="text-lg hover:text-blue-600 transition-colors" title="Журнал">
+                                    📋
+                                </a>
+                                <a href="{% url 'printing:form' %}" class="text-lg hover:text-blue-600 transition-colors" title="Печать">
+                                    🖨️
+                                </a>
+                            </div>
+                        </nav>
+                        
+                        <!-- Мобильная навигация -->
+                        <div class="lg:hidden">
+                            <button id="mobile-menu-button" class="text-gray-700 hover:text-blue-600 focus:outline-none">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Переключатель языка -->
+                    <form action="{% url 'set_language' %}" method="post" class="inline">
+                        {% csrf_token %}
+                        <select name="lang" onchange="this.form.submit()" class="border rounded px-2 py-1 text-sm">
+                            <option value="ru" {% if request.LANGUAGE_CODE == 'ru' %}selected{% endif %}>RU</option>
+                            <option value="kk" {% if request.LANGUAGE_CODE == 'kk' %}selected{% endif %}>KK</option>
+                        </select>
+                    </form>
+                    
+                    <!-- Селектор бизнеса -->
+                    {% if user.is_authenticated %}
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600">Бизнес:</span>
+                            {% if current_business %}
+                                <span class="text-sm font-medium">{{ current_business.name }}</span>
+                            {% else %}
+                                <span class="text-sm text-gray-400">не выбран</span>
+                            {% endif %}
+                            {% if user.owned_businesses.all %}
+                                <details class="relative inline-block">
+                                    <summary class="cursor-pointer underline text-sm text-blue-600">сменить</summary>
+                                    <div class="absolute right-0 mt-2 bg-white shadow-lg rounded-md border p-2 min-w-48 z-50">
+                                        {% for b in user.owned_businesses.all %}
+                                            <div class="py-1">
+                                                <a class="block underline text-sm hover:bg-gray-50 px-2 py-1 rounded" href="{% url 'businesses:choose' b.id %}">{{ b.name }}</a>
+                                            </div>
+                                        {% endfor %}
+                                        <hr class="my-2">
+                                        <div class="py-1">
+                                            <a class="block underline text-sm text-green-600 hover:bg-gray-50 px-2 py-1 rounded" href="{% url 'businesses:list' %}">Управление бизнесами</a>
+                                        </div>
+                                    </div>
+                                </details>
+                            {% else %}
+                                <a href="{% url 'businesses:create' %}" class="text-sm text-green-600 underline">создать</a>
+                            {% endif %}
+                        </div>
+                        
+                        <span class="text-sm text-gray-600">{{ user.username }} ({{ user.role }})</span>
+                        <form method="post" action="{% url 'logout' %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="text-sm text-red-600 hover:text-red-800 bg-transparent border-none cursor-pointer">Выход</button>
+                        </form>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="text-sm text-blue-600 hover:text-blue-800">Вход</a>
+                        <a href="{% url 'register' %}" class="text-sm text-green-600 hover:text-green-800">Регистрация</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mb-4 p-4 rounded {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Мобильное меню -->
+    <div id="mobile-menu" class="lg:hidden hidden fixed inset-0 z-50 bg-gray-800 bg-opacity-75">
+        <div class="fixed inset-y-0 left-0 max-w-xs w-full bg-white shadow-xl">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h2 class="text-lg font-semibold">Навигация</h2>
+                <button id="close-mobile-menu" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <nav class="p-4 space-y-6">
+                <!-- Основные разделы -->
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Основное</h3>
+                    <div class="space-y-2">
+                        <a href="{% url 'home' %}" class="block text-gray-700 hover:text-blue-600 py-2">
+                            🏠 Главная
+                        </a>
+                        <a href="{% url 'businesses:list' %}" class="block text-gray-700 hover:text-blue-600 py-2">
+                            🏢 Бизнесы
+                        </a>
+                        <a href="{% url 'campaigns:list' %}" class="block text-gray-700 hover:text-blue-600 py-2">
+                            📢 Кампании
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Клиенты и данные -->
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Клиенты</h3>
+                    <div class="space-y-2">
+                        <a href="{% url 'referrals:customers' %}" class="block text-gray-700 hover:text-blue-600 py-2">
+                            👥 Клиенты
+                        </a>
+                        <a href="{% url 'segments:list' %}" class="block text-gray-700 hover:text-blue-600 py-2">
+                            🎯 Сегменты
+                        </a>
+                        <a href="{% url 'reviews:list' %}" class="block text-gray-700 hover:text-blue-600 py-2">
+                            ⭐ Отзывы
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Аналитика -->
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Аналитика</h3>
+                    <div class="space-y-2">
+                        <a href="{% url 'analytics:dashboard' %}" class="block text-gray-700 hover:text-blue-600 py-2">
+                            📊 Аналитика
+                        </a>
+                        <a href="{% url 'integrations_ig:dashboard' %}" class="block text-gray-700 hover:text-blue-600 py-2">
+                            📸 Instagram
+                        </a>
+                        <a href="{% url 'wallet:dashboard' %}" class="block text-gray-700 hover:text-blue-600 py-2">
+                            📱 Google Wallet
+                        </a>
+                        <a href="{% url 'blasts:list' %}" class="block text-gray-700 hover:text-blue-600 py-2">
+                            📧 Рассылки
+                        </a>
+
+                        <a href="{% url 'fraud:list' %}" class="block text-gray-700 hover:text-blue-600 py-2">
+                            🛡️ Антифрод
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Операции -->
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Операции</h3>
+                    <div class="space-y-2">
+                        <a href="{% url 'redemptions:redeem' %}" class="block bg-green-100 text-green-700 px-3 py-2 rounded-md font-medium">
+                            💳 Погасить купон
+                        </a>
+                        <a href="{% url 'redemptions:list' %}" class="block text-gray-700 hover:text-blue-600 py-2">
+                            📋 Журнал погашений
+                        </a>
+                        <a href="{% url 'printing:form' %}" class="block text-gray-700 hover:text-blue-600 py-2">
+                            🖨️ Печать
+                        </a>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </div>
+
+    <script>
+        // Мобильное меню
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const closeMobileMenu = document.getElementById('close-mobile-menu');
+
+            if (mobileMenuButton && mobileMenu && closeMobileMenu) {
+                mobileMenuButton.addEventListener('click', function() {
+                    mobileMenu.classList.remove('hidden');
+                });
+
+                closeMobileMenu.addEventListener('click', function() {
+                    mobileMenu.classList.add('hidden');
+                });
+
+                // Закрытие по клику вне меню
+                mobileMenu.addEventListener('click', function(e) {
+                    if (e.target === mobileMenu) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

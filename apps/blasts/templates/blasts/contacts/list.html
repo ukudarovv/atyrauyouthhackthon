@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+
+{% block title %}Контактные точки{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-semibold">📞 Контактные точки</h1>
+            <p class="text-gray-600">{{ business.name }}</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'blasts:list' %}" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                📧 К рассылкам
+            </a>
+            <button onclick="syncContacts()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                🔄 Синхронизировать
+            </button>
+        </div>
+    </div>
+
+    <!-- Статистика -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white p-6 rounded-lg shadow">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <span class="text-blue-600 text-sm font-medium">📞</span>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Всего контактов</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.total }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <span class="text-green-600 text-sm font-medium">✅</span>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Проверенных</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.verified }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <span class="text-purple-600 text-sm font-medium">👍</span>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Согласие</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.opt_in }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <span class="text-orange-600 text-sm font-medium">📊</span>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Каналов</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ type_stats|length }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Статистика по типам -->
+    <div class="bg-white p-6 rounded-lg shadow mb-6">
+        <h3 class="text-lg font-medium mb-4">📊 Распределение по каналам</h3>
+        
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {% for type_stat in type_stats %}
+            <div class="text-center p-4 border rounded">
+                <div class="text-2xl mb-2">
+                    {% if type_stat.type == 'email' %}📧
+                    {% elif type_stat.type == 'sms' %}📱
+                    {% elif type_stat.type == 'whatsapp' %}📱
+                    {% elif type_stat.type == 'telegram' %}💬
+                    {% elif type_stat.type == 'instagram' %}📸
+                    {% elif type_stat.type == 'wallet' %}📱
+                    {% else %}📬{% endif %}
+                </div>
+                <div class="font-medium">{{ type_stat.type|title }}</div>
+                <div class="text-sm text-gray-500">{{ type_stat.count }} контактов</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="bg-white p-4 rounded-lg shadow mb-6">
+        <form method="get" class="flex flex-wrap gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Тип контакта</label>
+                <select name="type" class="border border-gray-300 rounded px-3 py-2">
+                    <option value="">Все типы</option>
+                    <option value="email" {% if type_filter == 'email' %}selected{% endif %}>📧 Email</option>
+                    <option value="sms" {% if type_filter == 'sms' %}selected{% endif %}>📱 SMS</option>
+                    <option value="whatsapp" {% if type_filter == 'whatsapp' %}selected{% endif %}>📱 WhatsApp</option>
+                    <option value="telegram" {% if type_filter == 'telegram' %}selected{% endif %}>💬 Telegram</option>
+                    <option value="instagram" {% if type_filter == 'instagram' %}selected{% endif %}>📸 Instagram</option>
+                    <option value="wallet" {% if type_filter == 'wallet' %}selected{% endif %}>📱 Wallet</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Статус</label>
+                <select name="verified" class="border border-gray-300 rounded px-3 py-2">
+                    <option value="">Все статусы</option>
+                    <option value="true" {% if verified_filter == 'true' %}selected{% endif %}>Проверенные</option>
+                    <option value="false" {% if verified_filter == 'false' %}selected{% endif %}>Не проверенные</option>
+                </select>
+            </div>
+            
+            <div class="flex items-end">
+                <button type="submit" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+                    Фильтровать
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Список контактов -->
+    <div class="bg-white rounded-lg shadow">
+        {% if contacts %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Контакт
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Тип
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Клиент
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Статус
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Последняя активность
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Создан
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for contact in contacts %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 w-8 h-8">
+                                    <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        {% if contact.type == 'email' %}📧
+                                        {% elif contact.type == 'sms' %}📱
+                                        {% elif contact.type == 'whatsapp' %}📱
+                                        {% elif contact.type == 'telegram' %}💬
+                                        {% elif contact.type == 'instagram' %}📸
+                                        {% elif contact.type == 'wallet' %}📱
+                                        {% else %}📬{% endif %}
+                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ contact.value }}</div>
+                                    {% if contact.metadata %}
+                                    <div class="text-sm text-gray-500">
+                                        {% for key, value in contact.metadata.items %}
+                                            {{ key }}: {{ value }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ contact.get_type_display }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if contact.customer %}
+                            <div class="text-sm text-gray-900">{{ contact.customer.phone_e164 }}</div>
+                            {% if contact.customer.tags.first_name %}
+                            <div class="text-sm text-gray-500">{{ contact.customer.tags.first_name }}</div>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-sm text-gray-400">Не привязан</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex space-x-2">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                    {% if contact.verified %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                    {% if contact.verified %}✅ Проверен{% else %}⏳ Не проверен{% endif %}
+                                </span>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                    {% if contact.opt_in %}bg-blue-100 text-blue-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                    {% if contact.opt_in %}👍 Согласие{% else %}👎 Отказ{% endif %}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {% if contact.last_seen_at %}
+                                {{ contact.last_seen_at|date:"d.m.Y H:i" }}
+                            {% else %}
+                                Никогда
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ contact.created_at|date:"d.m.Y H:i" }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-6 text-center">
+            <div class="text-4xl mb-4">📞</div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Пока нет контактных точек</h3>
+            <p class="text-gray-500 mb-4">Синхронизируйте контакты с клиентами для начала рассылок</p>
+            <button onclick="syncContacts()" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                🔄 Синхронизировать контакты
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function syncContacts() {
+    const button = event.target;
+    const originalText = button.textContent;
+    
+    button.disabled = true;
+    button.textContent = '🔄 Синхронизация...';
+    
+    fetch('{% url "blasts:contact_sync" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ ' + data.message);
+            location.reload();
+        } else {
+            alert('❌ Ошибка: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('❌ Ошибка синхронизации');
+    })
+    .finally(() => {
+        button.disabled = false;
+        button.textContent = originalText;
+    });
+}
+</script>
+
+<!-- Скрытый CSRF токен для AJAX запросов -->
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+{% endblock %}

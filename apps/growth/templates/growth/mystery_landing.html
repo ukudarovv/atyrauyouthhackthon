@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ mystery_drop.title }} - {{ campaign.name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, {{ mystery_drop.background_color }} 0%, #000 100%);
+            min-height: 100vh;
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        
+        .scratch-card {
+            position: relative;
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        
+        .scratch-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, #8B8B8B, #A0A0A0);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .scratch-overlay.scratched {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+        
+        .shake-detector {
+            transition: transform 0.3s ease;
+        }
+        
+        .shake-detector.shaking {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        .prize-card {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            color: white;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        .tier-preview {
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+        
+        .tier-preview:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen flex flex-col items-center justify-center p-4">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl md:text-6xl font-bold text-white mb-4">
+                {{ mystery_drop.title }}
+            </h1>
+            <p class="text-xl text-gray-300 mb-6">
+                {{ mystery_drop.subtitle }}
+            </p>
+            <div class="text-sm text-gray-400">
+                {{ campaign.business.name }}
+            </div>
+        </div>
+
+        <!-- Mystery Card Container -->
+        <div id="mystery-container" class="w-full max-w-md mx-auto">
+            <!-- Initial State -->
+            <div id="initial-state" class="text-center">
+                <div class="scratch-card shake-detector p-8 mb-6" id="scratch-card">
+                    <div class="scratch-overlay" id="scratch-overlay">
+                        <div>
+                            <div class="text-2xl mb-2">🎰</div>
+                            <div>Поскреби или потряси</div>
+                            <div class="text-sm mt-2 opacity-75">для открытия приза</div>
+                        </div>
+                    </div>
+                    <div class="text-center text-gray-800" id="prize-content" style="display: none;">
+                        <div class="text-4xl mb-4" id="prize-emoji">🎁</div>
+                        <div class="text-2xl font-bold mb-2" id="prize-name">Ваш приз!</div>
+                        <div class="text-lg" id="prize-discount">Скидка 20%</div>
+                    </div>
+                </div>
+
+                <!-- Phone Input -->
+                <div class="mb-6">
+                    <input type="tel" 
+                           id="phone-input" 
+                           placeholder="+7 (___) ___-__-__"
+                           class="w-full px-4 py-3 text-lg text-center bg-white/10 backdrop-blur text-white placeholder-gray-400 border border-white/20 rounded-lg focus:outline-none focus:border-white/50">
+                    <div class="text-sm text-gray-400 mt-2">
+                        Укажите телефон для получения приза
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <button id="reveal-button" 
+                        class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold py-4 px-6 rounded-lg text-lg pulse-animation hover:from-yellow-300 hover:to-orange-400 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                    🎲 Открыть приз
+                </button>
+
+                <div class="text-xs text-gray-500 mt-4 text-center">
+                    Максимум {{ mystery_drop.daily_cap_per_phone }} попыток в день
+                </div>
+            </div>
+
+            <!-- Result State -->
+            <div id="result-state" class="text-center" style="display: none;">
+                <div class="prize-card mb-6">
+                    <div class="text-6xl mb-4" id="result-emoji">🎉</div>
+                    <h2 class="text-3xl font-bold mb-4" id="result-title">Поздравляем!</h2>
+                    <div class="text-xl mb-4" id="result-prize">Вы выиграли скидку 20%!</div>
+                    <div class="bg-white/20 rounded-lg p-4 mb-4">
+                        <div class="text-sm opacity-75 mb-1">Ваш код:</div>
+                        <div class="text-2xl font-mono font-bold" id="result-code">ABC123</div>
+                    </div>
+                </div>
+
+                <!-- Wallet Button -->
+                <div id="wallet-section" style="display: none;">
+                    <a id="wallet-button" 
+                       href="#"
+                       class="block w-full bg-black text-white font-bold py-4 px-6 rounded-lg text-lg mb-4 hover:bg-gray-800 transition-colors">
+                        📱 Добавить в Google Wallet
+                    </a>
+                </div>
+
+                <!-- Share Buttons -->
+                <div class="flex space-x-4 mb-6">
+                    <button onclick="shareWhatsApp()" 
+                            class="flex-1 bg-green-500 text-white py-3 px-4 rounded-lg hover:bg-green-600 transition-colors">
+                        📱 WhatsApp
+                    </button>
+                    <button onclick="shareTelegram()" 
+                            class="flex-1 bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 transition-colors">
+                        ✈️ Telegram
+                    </button>
+                </div>
+
+                <button onclick="tryAgain()" 
+                        class="text-gray-400 hover:text-white transition-colors">
+                    Попробовать еще раз завтра
+                </button>
+            </div>
+        </div>
+
+        <!-- Prize Tiers Preview -->
+        <div class="mt-12 w-full max-w-4xl mx-auto">
+            <h3 class="text-2xl font-bold text-white text-center mb-6">Возможные призы</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {% for tier in tiers %}
+                <div class="tier-preview bg-white/10 backdrop-blur rounded-lg p-4 text-center text-white">
+                    <div class="text-3xl mb-2">{{ tier.emoji }}</div>
+                    <div class="font-semibold mb-1">{{ tier.name }}</div>
+                    <div class="text-sm opacity-75">{{ tier.probability }}% шанс</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-12 text-center text-gray-500 text-sm">
+            <p>Powered by {{ campaign.business.name }}</p>
+            <p class="mt-2">Предложение действительно до {{ campaign.expires_at|date:"d.m.Y" }}</p>
+        </div>
+    </div>
+
+    <script>
+        let isRevealed = false;
+        let currentResult = null;
+        
+        // Phone input formatting
+        const phoneInput = document.getElementById('phone-input');
+        phoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.startsWith('8')) value = '7' + value.slice(1);
+            if (!value.startsWith('7')) value = '7' + value;
+            
+            let formatted = '+7';
+            if (value.length > 1) {
+                formatted += ' (' + value.slice(1, 4);
+                if (value.length > 4) {
+                    formatted += ') ' + value.slice(4, 7);
+                    if (value.length > 7) {
+                        formatted += '-' + value.slice(7, 9);
+                        if (value.length > 9) {
+                            formatted += '-' + value.slice(9, 11);
+                        }
+                    }
+                }
+            }
+            e.target.value = formatted;
+        });
+        
+        // Scratch card interaction
+        const scratchCard = document.getElementById('scratch-card');
+        const scratchOverlay = document.getElementById('scratch-overlay');
+        const prizeContent = document.getElementById('prize-content');
+        
+        // Mouse/touch scratch
+        let isScratching = false;
+        let scratchProgress = 0;
+        
+        scratchOverlay.addEventListener('mousedown', startScratching);
+        scratchOverlay.addEventListener('touchstart', startScratching);
+        
+        document.addEventListener('mousemove', scratch);
+        document.addEventListener('touchmove', scratch);
+        
+        document.addEventListener('mouseup', stopScratching);
+        document.addEventListener('touchend', stopScratching);
+        
+        function startScratching(e) {
+            if (isRevealed) return;
+            isScratching = true;
+            e.preventDefault();
+        }
+        
+        function scratch(e) {
+            if (!isScratching || isRevealed) return;
+            
+            scratchProgress += 2;
+            scratchOverlay.style.opacity = Math.max(0, 1 - scratchProgress / 100);
+            
+            if (scratchProgress >= 50) {
+                revealPrize();
+            }
+        }
+        
+        function stopScratching() {
+            isScratching = false;
+        }
+        
+        // Shake detection
+        if (window.DeviceMotionEvent) {
+            let lastAcceleration = { x: 0, y: 0, z: 0 };
+            let shakeThreshold = 15;
+            
+            window.addEventListener('devicemotion', function(e) {
+                if (isRevealed) return;
+                
+                const acceleration = e.accelerationIncludingGravity;
+                if (!acceleration) return;
+                
+                const deltaX = Math.abs(acceleration.x - lastAcceleration.x);
+                const deltaY = Math.abs(acceleration.y - lastAcceleration.y);
+                const deltaZ = Math.abs(acceleration.z - lastAcceleration.z);
+                
+                if (deltaX + deltaY + deltaZ > shakeThreshold) {
+                    scratchCard.classList.add('shaking');
+                    setTimeout(() => scratchCard.classList.remove('shaking'), 500);
+                    
+                    scratchProgress += 20;
+                    scratchOverlay.style.opacity = Math.max(0, 1 - scratchProgress / 100);
+                    
+                    if (scratchProgress >= 50) {
+                        revealPrize();
+                    }
+                }
+                
+                lastAcceleration = { x: acceleration.x, y: acceleration.y, z: acceleration.z };
+            });
+        }
+        
+        // Reveal button
+        document.getElementById('reveal-button').addEventListener('click', function() {
+            const phone = phoneInput.value.trim();
+            if (!phone || phone.length < 10) {
+                alert('Пожалуйста, укажите корректный номер телефона');
+                phoneInput.focus();
+                return;
+            }
+            
+            if (!isRevealed) {
+                revealPrize();
+            } else {
+                attemptPrize();
+            }
+        });
+        
+        function revealPrize() {
+            if (isRevealed) return;
+            
+            isRevealed = true;
+            scratchOverlay.classList.add('scratched');
+            prizeContent.style.display = 'block';
+            
+            // Simulate prize selection (will be replaced with actual API call)
+            const tiers = {{ tiers|safe }};
+            const randomTier = tiers[Math.floor(Math.random() * tiers.length)];
+            
+            document.getElementById('prize-emoji').textContent = randomTier.emoji;
+            document.getElementById('prize-name').textContent = randomTier.name;
+            document.getElementById('prize-discount').textContent = `Скидка ${randomTier.discount_percent}%`;
+            
+            // Change button text
+            document.getElementById('reveal-button').innerHTML = '🎁 Получить приз';
+        }
+        
+        function attemptPrize() {
+            const phone = phoneInput.value.replace(/\D/g, '');
+            const button = document.getElementById('reveal-button');
+            
+            button.disabled = true;
+            button.innerHTML = '⏳ Генерируем приз...';
+            
+            fetch(`/api/mystery/{{ mystery_drop.id }}/attempt/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ phone: '+' + phone })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showResult(data.data);
+                } else {
+                    alert(data.message);
+                    button.disabled = false;
+                    button.innerHTML = '🎁 Получить приз';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Произошла ошибка, попробуйте позже');
+                button.disabled = false;
+                button.innerHTML = '🎁 Получить приз';
+            });
+        }
+        
+        function showResult(data) {
+            currentResult = data;
+            
+            // Update result display
+            document.getElementById('result-emoji').textContent = data.tier.emoji;
+            document.getElementById('result-title').textContent = 'Поздравляем!';
+            document.getElementById('result-prize').textContent = `Вы выиграли: ${data.tier.name}`;
+            document.getElementById('result-code').textContent = data.coupon.code;
+            
+            // Show wallet button if available
+            if (data.wallet_url) {
+                document.getElementById('wallet-section').style.display = 'block';
+                document.getElementById('wallet-button').href = data.wallet_url;
+            }
+            
+            // Switch to result state
+            document.getElementById('initial-state').style.display = 'none';
+            document.getElementById('result-state').style.display = 'block';
+        }
+        
+        function shareWhatsApp() {
+            if (!currentResult) return;
+            
+            const text = `🎉 Я выиграл ${currentResult.tier.name} в {{ campaign.business.name }}! Попробуй и ты: ${window.location.href}`;
+            const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        }
+        
+        function shareTelegram() {
+            if (!currentResult) return;
+            
+            const text = `🎉 Я выиграл ${currentResult.tier.name} в {{ campaign.business.name }}! Попробуй и ты: ${window.location.href}`;
+            const url = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        }
+        
+        function tryAgain() {
+            location.reload();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,339 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  {% if landing_mode %}
+    Редактирование лендинга
+  {% elif form.instance.pk %}
+    Редактировать кампанию
+  {% else %}
+    Создать кампанию
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-2xl font-semibold mb-6">
+        {% if landing_mode %}
+            Редактирование лендинга
+            {% if campaign %}: {{ campaign.name }}{% endif %}
+        {% elif form.instance.pk %}
+            Редактировать кампанию
+        {% else %}
+            Создать кампанию
+        {% endif %}
+    </h1>
+    
+    {% if landing_mode and campaign %}
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                </svg>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-blue-800">Публичная ссылка</h3>
+                <p class="mt-1 text-sm text-blue-700">
+                    <a href="{{ campaign.get_public_url }}" target="_blank" class="underline">{{ campaign.get_public_url }}</a>
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <form method="post" enctype="multipart/form-data" class="bg-white p-6 rounded-lg shadow">
+        {% csrf_token %}
+        
+        {% if landing_mode %}
+        <!-- Форма лендинга -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="space-y-6">
+                <h3 class="text-lg font-medium text-gray-900 border-b pb-2">Основное содержимое</h3>
+                
+                <!-- Заголовок -->
+                <div>
+                    <label for="{{ form.headline.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Заголовок лендинга *
+                    </label>
+                    {{ form.headline }}
+                    {% if form.headline.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.headline.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Описание -->
+                <div>
+                    <label for="{{ form.body_md.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Описание
+                    </label>
+                    {{ form.body_md }}
+                    {% if form.body_md.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.body_md.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- CTA текст -->
+                <div>
+                    <label for="{{ form.cta_text.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Текст кнопки
+                    </label>
+                    {{ form.cta_text }}
+                    {% if form.cta_text.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.cta_text.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Цвет -->
+                <div>
+                    <label for="{{ form.primary_color.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Основной цвет
+                    </label>
+                    {{ form.primary_color }}
+                    {% if form.primary_color.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.primary_color.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="space-y-6">
+                <h3 class="text-lg font-medium text-gray-900 border-b pb-2">SEO и изображения</h3>
+                
+                <!-- Hero изображение -->
+                <div>
+                    <label for="{{ form.hero_image.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Главное изображение
+                    </label>
+                    {{ form.hero_image }}
+                    {% if form.hero_image.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.hero_image.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- SEO заголовок -->
+                <div>
+                    <label for="{{ form.seo_title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        SEO заголовок
+                    </label>
+                    {{ form.seo_title }}
+                    {% if form.seo_title.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.seo_title.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- SEO описание -->
+                <div>
+                    <label for="{{ form.seo_desc.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        SEO описание
+                    </label>
+                    {{ form.seo_desc }}
+                    {% if form.seo_desc.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.seo_desc.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- OG изображение -->
+                <div>
+                    <label for="{{ form.og_image.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Изображение для соц.сетей
+                    </label>
+                    {{ form.og_image }}
+                    {% if form.og_image.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.og_image.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        {% else %}
+        <!-- Форма кампании -->
+        <div class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Название -->
+                <div>
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Название кампании *
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Тип -->
+                <div>
+                    <label for="{{ form.type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Тип кампании
+                    </label>
+                    {{ form.type }}
+                    {% if form.type.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.type.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Бизнес -->
+                <div>
+                    <label for="{{ form.business.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Бизнес *
+                    </label>
+                    {{ form.business }}
+                    {% if form.business.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.business.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Локация -->
+                <div>
+                    <label for="{{ form.location.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Локация
+                    </label>
+                    {{ form.location }}
+                    {% if form.location.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.location.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Дата начала -->
+                <div>
+                    <label for="{{ form.starts_at.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Дата начала
+                    </label>
+                    {{ form.starts_at }}
+                    {% if form.starts_at.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.starts_at.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Дата окончания -->
+                <div>
+                    <label for="{{ form.ends_at.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Дата окончания
+                    </label>
+                    {{ form.ends_at }}
+                    {% if form.ends_at.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.ends_at.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Описание -->
+            <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Описание
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Условия -->
+            <div>
+                <label for="{{ form.terms.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Условия участия
+                </label>
+                {{ form.terms }}
+                {% if form.terms.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.terms.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Лимит купонов -->
+                <div>
+                    <label for="{{ form.issue_limit.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Лимит купонов
+                    </label>
+                    {{ form.issue_limit }}
+                    {% if form.issue_limit.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.issue_limit.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Лимит на телефон -->
+                <div>
+                    <label for="{{ form.per_phone_limit.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Лимит на номер
+                    </label>
+                    {{ form.per_phone_limit }}
+                    {% if form.per_phone_limit.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.per_phone_limit.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Тема лендинга -->
+                <div>
+                    <label for="{{ form.landing_theme.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Тема лендинга
+                    </label>
+                    {{ form.landing_theme }}
+                    {% if form.landing_theme.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.landing_theme.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Активность -->
+            <div class="flex items-center">
+                {{ form.is_active }}
+                <label for="{{ form.is_active.id_for_label }}" class="ml-2 text-sm font-medium text-gray-700">
+                    Кампания активна
+                </label>
+                {% if form.is_active.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.is_active.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="mt-8 flex justify-between">
+            <a href="{% url 'campaigns:list' %}" class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">
+                Отмена
+            </a>
+            <button type="submit" class="px-6 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
+                {% if form.instance.pk %}
+                    Сохранить изменения
+                {% else %}
+                    {% if landing_mode %}Сохранить лендинг{% else %}Создать кампанию{% endif %}
+                {% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+/* Стили для полей формы */
+form input, form select, form textarea {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    margin-top: 0.25rem;
+}
+
+form input:focus, form select:focus, form textarea:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: #8b5cf6;
+    border-color: #8b5cf6;
+}
+
+form input[type="checkbox"] {
+    width: auto;
+    margin-top: 0;
+}
+
+form input[type="color"] {
+    padding: 0.25rem;
+    height: 2.5rem;
+    width: 100%;
+}
+
+form input[type="file"] {
+    padding: 0.5rem;
+}
+</style>
+{% endblock %}

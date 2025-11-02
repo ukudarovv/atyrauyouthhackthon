@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}Печать постеров{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-semibold">🖨️ Печать постеров</h1>
+            <p class="text-gray-600">Создание PDF постеров для кампаний</p>
+        </div>
+    </div>
+
+    {% if campaigns %}
+        <div class="bg-white p-6 rounded-lg shadow max-w-2xl">
+            <form method="get" action="{% url 'printing:pdf' %}">
+                <!-- Выбор кампании -->
+                <div class="mb-6">
+                    <label for="campaign" class="block text-sm font-medium text-gray-700 mb-2">
+                        Кампания *
+                    </label>
+                    <select name="campaign" id="campaign" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Выберите кампанию</option>
+                        {% for c in campaigns %}
+                            <option value="{{ c.id }}">
+                                {{ c.name }}
+                                {% if c.ends_at %}
+                                    (до {{ c.ends_at|date:"d.m.Y" }})
+                                {% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500">
+                        Выберите кампанию для создания постера
+                    </p>
+                </div>
+
+                <!-- Выбор размера -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Размер постера *
+                    </label>
+                    <div class="space-y-3">
+                        <div class="flex items-center">
+                            <input id="size_a4" name="size" type="radio" value="A4" checked
+                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                            <label for="size_a4" class="ml-3 block text-sm font-medium text-gray-700">
+                                A4 (210×297 мм)
+                            </label>
+                            <span class="ml-2 text-xs text-gray-500">— большой постер для стенда</span>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="size_a6" name="size" type="radio" value="A6"
+                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                            <label for="size_a6" class="ml-3 block text-sm font-medium text-gray-700">
+                                A6 (105×148 мм)
+                            </label>
+                            <span class="ml-2 text-xs text-gray-500">— компактная карточка</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Кнопки генерации -->
+                <div class="space-y-3">
+                    <!-- PDF -->
+                    <button type="submit" 
+                            class="w-full py-3 px-6 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+                        📄 Скачать PDF
+                    </button>
+                    
+                    <!-- Превью -->
+                    <button type="submit" 
+                            formaction="{% url 'printing:preview' %}" 
+                            formtarget="_blank"
+                            class="w-full py-3 px-6 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors">
+                        👁️ Превью HTML
+                    </button>
+                    
+                    <!-- Назад -->
+                    <a href="{% url 'campaigns:list' %}" 
+                       class="block text-center py-3 px-6 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors">
+                        ← К кампаниям
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Информация о печати -->
+        <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-blue-800">Рекомендации по печати</h3>
+                    <div class="mt-2 text-sm text-blue-700">
+                        <ul class="list-disc list-inside space-y-1">
+                            <li><strong>A4:</strong> подходит для размещения на стендах, витринах, стенах</li>
+                            <li><strong>A6:</strong> компактные карточки для раздачи клиентам</li>
+                            <li>Печатайте на плотной бумаге (200-300 г/м²) для лучшего качества</li>
+                            <li>QR-код ведет на публичную страницу кампании</li>
+                            <li>Цвета автоматически подбираются из настроек кампании</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Превью -->
+        <div class="mt-6 bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Что будет на постере:</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="font-medium text-gray-700 mb-2">Содержание:</h4>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>• Название кампании</li>
+                        <li>• Описание акции</li>
+                        <li>• Призыв к действию</li>
+                        <li>• Срок действия (если есть)</li>
+                        <li>• QR-код для быстрого доступа</li>
+                        <li>• Ссылка на кампанию</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-medium text-gray-700 mb-2">Дизайн:</h4>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>• Фирменные цвета бизнеса</li>
+                        <li>• Читаемые шрифты</li>
+                        <li>• Оптимизация для печати</li>
+                        <li>• Адаптация под размер</li>
+                        <li>• Высокое качество QR-кода</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- Нет кампаний -->
+        <div class="text-center py-12 bg-white rounded-lg shadow">
+            <div class="text-4xl mb-4">📄</div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Нет кампаний для печати</h3>
+            <p class="text-gray-600 mb-6">
+                Создайте кампанию, чтобы сгенерировать постеры для печати
+            </p>
+            <a href="{% url 'campaigns:create' %}" 
+               class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700">
+                ➕ Создать кампанию
+            </a>
+        </div>
+    {% endif %}
+
+    <!-- Статус генератора PDF -->
+    <div class="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
+        <h3 class="text-sm font-semibold text-gray-900 mb-2">🔧 Статус генератора PDF</h3>
+        <div class="text-sm text-gray-700 space-y-2">
+            {% if weasyprint_available %}
+                <div class="flex items-center space-x-2">
+                    <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                    <span><strong>WeasyPrint:</strong> Полнофункциональная генерация HTML→PDF</span>
+                </div>
+                <div class="text-xs text-gray-500 ml-4">
+                    Поддержка сложной верстки, CSS стилей, изображений
+                </div>
+            {% else %}
+                <div class="flex items-center space-x-2">
+                    <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    <span><strong>ReportLab:</strong> Стандартная генерация PDF ✅</span>
+                </div>
+                <div class="text-xs text-gray-500 ml-4">
+                    Создание PDF с контентом кампании, QR-кодами и фирменными цветами
+                </div>
+            {% endif %}
+            
+            <div class="border-t pt-2 mt-2">
+                <div class="text-xs text-gray-600">
+                    <strong>Что включено в PDF:</strong><br>
+                    • Название и описание кампании<br>
+                    • QR-код со ссылкой на публичную страницу<br>
+                    • Фирменные цвета и читаемые шрифты<br>
+                    • Информация о сроке действия<br>
+                    • Оптимизация для качественной печати
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

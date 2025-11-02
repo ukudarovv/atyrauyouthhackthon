@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block title %}Шаблоны сообщений{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-semibold">📝 Шаблоны сообщений</h1>
+            <p class="text-gray-600">{{ business.name }}</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'blasts:list' %}" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                📧 К рассылкам
+            </a>
+            <a href="{% url 'blasts:template_create' %}" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                ➕ Создать шаблон
+            </a>
+        </div>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="bg-white p-4 rounded-lg shadow mb-6">
+        <form method="get" class="flex flex-wrap gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Канал</label>
+                <select name="channel" class="border border-gray-300 rounded px-3 py-2">
+                    <option value="">Все каналы</option>
+                    <option value="email" {% if channel_filter == 'email' %}selected{% endif %}>📧 Email</option>
+                    <option value="sms" {% if channel_filter == 'sms' %}selected{% endif %}>📱 SMS</option>
+                    <option value="whatsapp" {% if channel_filter == 'whatsapp' %}selected{% endif %}>📱 WhatsApp</option>
+                    <option value="telegram" {% if channel_filter == 'telegram' %}selected{% endif %}>💬 Telegram</option>
+                </select>
+            </div>
+            
+            <div class="flex items-end">
+                <button type="submit" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+                    Фильтровать
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Список шаблонов -->
+    <div class="bg-white rounded-lg shadow">
+        {% if templates %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Шаблон
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Канал
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Язык
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Статус
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Создан
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Действия
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for template in templates %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">
+                                    <a href="{% url 'blasts:template_detail' template.pk %}" class="hover:text-blue-600">
+                                        {{ template.name }}
+                                    </a>
+                                </div>
+                                {% if template.subject %}
+                                <div class="text-sm text-gray-500">{{ template.subject|truncatechars:50 }}</div>
+                                {% endif %}
+                                {% if template.a_b_bucket %}
+                                <div class="text-xs text-purple-600">A/B тест: вариант {{ template.a_b_bucket }}</div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm text-gray-900">
+                                {% if template.channel == 'email' %}📧 Email
+                                {% elif template.channel == 'sms' %}📱 SMS
+                                {% elif template.channel == 'whatsapp' %}📱 WhatsApp
+                                {% elif template.channel == 'telegram' %}💬 Telegram
+                                {% elif template.channel == 'instagram' %}📸 Instagram
+                                {% elif template.channel == 'wallet' %}📱 Wallet
+                                {% else %}{{ template.get_channel_display }}{% endif %}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ template.locale|upper }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                {% if template.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                {% if template.is_active %}Активен{% else %}Неактивен{% endif %}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ template.created_at|date:"d.m.Y H:i" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex space-x-2">
+                                <a href="{% url 'blasts:template_detail' template.pk %}" class="text-blue-600 hover:text-blue-900">
+                                    Подробнее
+                                </a>
+                                <a href="{% url 'blasts:template_edit' template.pk %}" class="text-green-600 hover:text-green-900">
+                                    Редактировать
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-6 text-center">
+            <div class="text-4xl mb-4">📝</div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Пока нет шаблонов</h3>
+            <p class="text-gray-500 mb-4">Создайте первый шаблон сообщения для рассылок</p>
+            <a href="{% url 'blasts:template_create' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                Создать шаблон
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+
+{% block title %}Wallet карта - {{ wallet_pass.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-semibold">📱 {{ wallet_pass.title }}</h1>
+            <p class="text-gray-600">Google Wallet карта</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'wallet:dashboard' %}" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                ← Назад к списку
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Основная информация -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-medium mb-4">ℹ️ Информация о карте</h3>
+            
+            <dl class="space-y-4">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Заголовок</dt>
+                    <dd class="text-sm text-gray-900">{{ wallet_pass.title }}</dd>
+                </div>
+                
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Подзаголовок</dt>
+                    <dd class="text-sm text-gray-900">{{ wallet_pass.subtitle|default:"—" }}</dd>
+                </div>
+                
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Штрих-код</dt>
+                    <dd class="text-sm font-mono text-gray-900">{{ wallet_pass.barcode_value }}</dd>
+                </div>
+                
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Клиент</dt>
+                    <dd class="text-sm text-gray-900">{{ wallet_pass.customer_phone }}</dd>
+                </div>
+                
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Платформа</dt>
+                    <dd class="text-sm text-gray-900">{{ wallet_pass.get_platform_display }}</dd>
+                </div>
+                
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Статус</dt>
+                    <dd>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                            {% if wallet_pass.status == 'active' %}bg-green-100 text-green-800
+                            {% elif wallet_pass.status == 'expired' %}bg-gray-100 text-gray-800
+                            {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                            {{ wallet_pass.get_status_display }}
+                        </span>
+                    </dd>
+                </div>
+                
+                {% if wallet_pass.valid_from %}
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Действует с</dt>
+                    <dd class="text-sm text-gray-900">{{ wallet_pass.valid_from|date:"d.m.Y H:i" }}</dd>
+                </div>
+                {% endif %}
+                
+                {% if wallet_pass.valid_until %}
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Действует до</dt>
+                    <dd class="text-sm text-gray-900">{{ wallet_pass.valid_until|date:"d.m.Y H:i" }}</dd>
+                </div>
+                {% endif %}
+                
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Создана</dt>
+                    <dd class="text-sm text-gray-900">{{ wallet_pass.created_at|date:"d.m.Y H:i" }}</dd>
+                </div>
+                
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Обновлена</dt>
+                    <dd class="text-sm text-gray-900">{{ wallet_pass.updated_at|date:"d.m.Y H:i" }}</dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- Добавление в Wallet -->
+        <div class="space-y-6">
+            <!-- Кнопка добавления -->
+            {% if save_link %}
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-medium mb-4">📱 Добавить в Google Wallet</h3>
+                
+                <div class="space-y-4">
+                    <p class="text-sm text-gray-600">
+                        Нажмите кнопку ниже, чтобы добавить карту в Google Wallet на Android устройстве:
+                    </p>
+                    
+                    <a href="{{ save_link }}" 
+                       target="_blank"
+                       class="inline-flex items-center px-6 py-3 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2L2 7v10c0 5.55 3.84 9.95 9 11 5.16-1.05 9-5.45 9-11V7l-10-5z"/>
+                        </svg>
+                        Add to Google Wallet
+                    </a>
+                    
+                    <form method="post" action="{% url 'wallet:generate_link' wallet_pass.pk %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="text-sm text-blue-600 hover:text-blue-800">
+                            🔄 Сгенерировать новую ссылку
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                <h3 class="text-lg font-medium text-yellow-800 mb-2">⚠️ Ссылка недоступна</h3>
+                <p class="text-sm text-yellow-700 mb-4">
+                    Не удалось сгенерировать ссылку для добавления в Google Wallet.
+                </p>
+                <form method="post" action="{% url 'wallet:generate_link' wallet_pass.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700">
+                        Попробовать снова
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
+            <!-- Обновление карты -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-medium mb-4">✏️ Обновить карту</h3>
+                
+                <form method="post" action="{% url 'wallet:update_pass' wallet_pass.pk %}" class="space-y-4">
+                    {% csrf_token %}
+                    
+                    <div>
+                        <label for="title" class="block text-sm font-medium text-gray-700 mb-1">
+                            Заголовок
+                        </label>
+                        <input type="text" 
+                               id="title" 
+                               name="title" 
+                               value="{{ wallet_pass.title }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               maxlength="100">
+                    </div>
+                    
+                    <div>
+                        <label for="subtitle" class="block text-sm font-medium text-gray-700 mb-1">
+                            Подзаголовок
+                        </label>
+                        <input type="text" 
+                               id="subtitle" 
+                               name="subtitle" 
+                               value="{{ wallet_pass.subtitle }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               maxlength="100">
+                    </div>
+                    
+                    <div>
+                        <label for="message" class="block text-sm font-medium text-gray-700 mb-1">
+                            Сообщение пользователю
+                        </label>
+                        <textarea id="message" 
+                                  name="message" 
+                                  rows="3"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Например: 'Скидка действует только до конца месяца!'"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Сообщение будет отправлено как push уведомление
+                        </p>
+                    </div>
+                    
+                    <button type="submit" 
+                            class="w-full px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                        💾 Обновить карту
+                    </button>
+                </form>
+            </div>
+
+            <!-- Техническая информация -->
+            <div class="bg-gray-50 p-6 rounded-lg">
+                <h3 class="text-lg font-medium mb-4">🔧 Техническая информация</h3>
+                
+                <dl class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <dt class="font-medium text-gray-600">Class ID:</dt>
+                        <dd class="text-gray-900 font-mono text-xs">{{ wallet_pass.class_id }}</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="font-medium text-gray-600">Object ID:</dt>
+                        <dd class="text-gray-900 font-mono text-xs">{{ wallet_pass.object_id }}</dd>
+                    </div>
+                    {% if wallet_pass.metadata %}
+                    <div>
+                        <dt class="font-medium text-gray-600 mb-1">Метаданные:</dt>
+                        <dd class="text-gray-900">
+                            <details>
+                                <summary class="cursor-pointer text-blue-600 hover:text-blue-800">Показать JSON</summary>
+                                <pre class="mt-2 text-xs bg-gray-100 p-2 rounded overflow-x-auto">{{ wallet_pass.metadata|pprint }}</pre>
+                            </details>
+                        </dd>
+                    </div>
+                    {% endif %}
+                </dl>
+                
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <a href="{% url 'wallet:pass_preview' wallet_pass.pk %}" 
+                       target="_blank"
+                       class="text-sm text-blue-600 hover:text-blue-800">
+                        🔍 Просмотреть JSON объекта
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// AJAX для обновления ссылки
+document.querySelector('form[action*="generate_link"]')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    fetch(this.action, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Обновляем ссылку на странице
+            const linkElement = document.querySelector('a[href*="pay.google.com"]');
+            if (linkElement) {
+                linkElement.href = data.save_link;
+            }
+            alert('Ссылка обновлена успешно!');
+        } else {
+            alert('Ошибка: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Произошла ошибка при обновлении ссылки');
+    });
+});
+</script>
+{% endblock %}

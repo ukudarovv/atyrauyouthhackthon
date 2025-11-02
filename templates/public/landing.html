@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    
+    <!-- SEO мета-теги -->
+    <title>{{ landing.seo_title|default:camp.name }}</title>
+    <meta name="description" content="{{ landing.seo_desc|default:camp.description|truncatechars:150 }}">
+    
+    <!-- Open Graph для соц.сетей -->
+    <meta property="og:title" content="{{ landing.seo_title|default:camp.name }}">
+    <meta property="og:description" content="{{ landing.seo_desc|default:camp.description|truncatechars:150 }}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    {% if landing.og_image %}
+        <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ landing.og_image.url }}">
+    {% elif landing.hero_image %}
+        <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ landing.hero_image.url }}">
+    {% endif %}
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ landing.seo_title|default:camp.name }}">
+    <meta name="twitter:description" content="{{ landing.seo_desc|default:camp.description|truncatechars:150 }}">
+    {% if landing.og_image %}
+        <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ landing.og_image.url }}">
+    {% endif %}
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+    
+    <!-- Стили -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary-color: {{ landing.primary_color|default:"#111827" }};
+        }
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .btn-primary:hover {
+            filter: brightness(0.9);
+        }
+        .text-primary {
+            color: var(--primary-color);
+        }
+        .border-primary {
+            border-color: var(--primary-color);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <main class="min-h-screen flex items-center justify-center p-4">
+        <div class="max-w-2xl w-full">
+            <!-- Карточка лендинга -->
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                <!-- Изображение -->
+                {% if landing.hero_image %}
+                <div class="w-full h-64 sm:h-80 overflow-hidden">
+                    <img src="{{ landing.hero_image.url }}" 
+                         class="w-full h-full object-cover" 
+                         alt="{{ landing.headline|default:camp.name }}">
+                </div>
+                {% endif %}
+                
+                <!-- Контент -->
+                <div class="p-8 sm:p-12">
+                    <!-- Заголовок -->
+                    <h1 class="text-3xl sm:text-4xl font-bold text-primary mb-6 leading-tight">
+                        {{ landing.headline|default:camp.name }}
+                    </h1>
+                    
+                    <!-- Описание -->
+                    {% if landing.body_md %}
+                    <div class="prose prose-lg max-w-none text-gray-700 mb-8">
+                        {{ landing.body_md|linebreaks }}
+                    </div>
+                    {% elif camp.description %}
+                    <div class="prose prose-lg max-w-none text-gray-700 mb-8">
+                        {{ camp.description|linebreaks }}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Условия -->
+                    {% if camp.terms %}
+                    <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                        <h3 class="font-semibold text-gray-900 mb-2">Условия участия:</h3>
+                        <div class="text-sm text-gray-600">
+                            {{ camp.terms|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- CTA секция -->
+                    {% if camp.is_running_now %}
+                    <div class="text-center">
+                        <a href="{% url 'coupons:claim' camp.slug %}{% if query_string %}?{{ query_string }}{% endif %}"
+                           class="inline-block w-full sm:w-auto btn-primary text-white font-semibold py-4 px-8 rounded-xl text-lg transition-all duration-200 transform hover:scale-105 shadow-lg">
+                            🎫 {{ landing.cta_text|default:"Получить купон" }}
+                        </a>
+                        
+                        <!-- QR-код -->
+                        <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
+                            <img src="{% url 'coupons:landing_qr' camp.slug %}" 
+                                 alt="QR-код" 
+                                 class="w-20 h-20 rounded-lg border-2 border-gray-200" />
+                            <div class="text-sm text-gray-600 text-center sm:text-left">
+                                <p class="font-medium">Поделитесь с друзьями</p>
+                                <p>Отсканируйте QR-код</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Время окончания -->
+                        {% if camp.ends_at %}
+                        <p class="text-sm text-gray-500 mt-4">
+                            ⏰ Действует до {{ camp.ends_at|date:"d.m.Y в H:i" }}
+                        </p>
+                        {% endif %}
+                        
+                        <!-- Информация о бизнесе -->
+                        <div class="mt-8 pt-6 border-t border-gray-200">
+                            <div class="flex items-center justify-center space-x-4 text-sm text-gray-600">
+                                <span class="font-medium">{{ camp.business.name }}</span>
+                                {% if camp.business.phone %}
+                                    <span>📞 {{ camp.business.phone }}</span>
+                                {% endif %}
+                                {% if camp.location %}
+                                    <span>📍 {{ camp.location.name }}</span>
+                                {% endif %}
+                            </div>
+                            {% if camp.business.address %}
+                            <p class="text-center text-sm text-gray-500 mt-2">
+                                {{ camp.business.address }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <!-- Акция завершена -->
+                    <div class="text-center py-8">
+                        <div class="bg-gray-100 rounded-xl p-6">
+                            <div class="text-4xl mb-4">😔</div>
+                            <h3 class="text-xl font-semibold text-gray-800 mb-2">Акция недоступна</h3>
+                            <p class="text-gray-600">
+                                {% if camp.ends_at and camp.ends_at < now %}
+                                    Срок действия акции истек {{ camp.ends_at|date:"d.m.Y" }}
+                                {% elif camp.starts_at and camp.starts_at > now %}
+                                    Акция начнется {{ camp.starts_at|date:"d.m.Y в H:i" }}
+                                {% else %}
+                                    Акция временно приостановлена
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        <!-- Контакты для связи -->
+                        <div class="mt-6">
+                            <p class="text-sm text-gray-600 mb-2">Свяжитесь с нами для получения актуальных предложений:</p>
+                            <div class="flex items-center justify-center space-x-4 text-sm">
+                                <span class="font-medium">{{ camp.business.name }}</span>
+                                {% if camp.business.phone %}
+                                    <a href="tel:{{ camp.business.phone }}" class="text-primary hover:underline">
+                                        📞 {{ camp.business.phone }}
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Доверие и безопасность -->
+            <div class="text-center mt-6">
+                <p class="text-xs text-gray-500">
+                    🔒 Безопасная страница • 🎯 Официальное предложение от {{ camp.business.name }}
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Простая аналитика -->
+    <script>
+        // Можно добавить дополнительную аналитику здесь
+        console.log('Landing viewed:', '{{ camp.slug }}');
+        
+        // Отслеживание времени на странице
+        let startTime = Date.now();
+        window.addEventListener('beforeunload', function() {
+            let timeSpent = Math.round((Date.now() - startTime) / 1000);
+            // Здесь можно отправить данные о времени просмотра
+            console.log('Time spent:', timeSpent, 'seconds');
+        });
+    </script>
+</body>
+</html>

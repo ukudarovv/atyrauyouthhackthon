@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ is_editing|yesno:"Редактирование,Создание" }} сегмента{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="mb-6">
+        <div class="flex items-center space-x-2 mb-2">
+            <a href="{% url 'segments:list' %}" class="text-blue-600 hover:text-blue-800">← Назад к сегментам</a>
+        </div>
+        <h1 class="text-2xl font-semibold">
+            {{ is_editing|yesno:"✏️ Редактирование,➕ Создание" }} сегмента
+        </h1>
+        {% if segment.kind == 'system' %}
+            <p class="text-yellow-600">⚠️ Системный сегмент доступен только для просмотра</p>
+        {% endif %}
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Форма сегмента -->
+        <div class="lg:col-span-2">
+            <form method="post" class="bg-white rounded-lg shadow p-6">
+                {% csrf_token %}
+                
+                <!-- Основные поля -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+                            Название сегмента *
+                        </label>
+                        <input 
+                            type="text" 
+                            name="name" 
+                            id="name"
+                            value="{{ segment.name }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            {% if not can_edit %}readonly{% endif %}
+                            required
+                        />
+                    </div>
+                    
+                    <div>
+                        <label for="slug" class="block text-sm font-medium text-gray-700 mb-1">
+                            Slug (URL-имя)
+                        </label>
+                        <input 
+                            type="text" 
+                            name="slug" 
+                            id="slug"
+                            value="{{ segment.slug }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            {% if not can_edit %}readonly{% endif %}
+                            placeholder="auto-generate"
+                        />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label for="color" class="block text-sm font-medium text-gray-700 mb-1">
+                            Цвет сегмента
+                        </label>
+                        <input 
+                            type="color" 
+                            name="color" 
+                            id="color"
+                            value="{{ segment.color }}"
+                            class="w-full h-10 border border-gray-300 rounded-md"
+                            {% if not can_edit %}disabled{% endif %}
+                        />
+                    </div>
+                    
+                    <div class="flex items-end">
+                        <label class="inline-flex items-center">
+                            <input 
+                                type="checkbox" 
+                                name="enabled" 
+                                {% if segment.enabled %}checked{% endif %}
+                                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                {% if not can_edit %}disabled{% endif %}
+                            />
+                            <span class="ml-2 text-sm text-gray-700">Сегмент активен</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Описание -->
+                <div class="mb-6">
+                    <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
+                        Описание
+                    </label>
+                    <textarea 
+                        name="description" 
+                        id="description"
+                        rows="2"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        {% if not can_edit %}readonly{% endif %}
+                        placeholder="Краткое описание сегмента..."
+                    >{{ segment.description }}</textarea>
+                </div>
+
+                <!-- Правила сегментации -->
+                <div class="mb-6">
+                    <label for="definition" class="block text-sm font-medium text-gray-700 mb-1">
+                        Правила сегментации (JSON) *
+                    </label>
+                    <textarea 
+                        name="definition" 
+                        id="definition"
+                        rows="12"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                        {% if not can_edit %}readonly{% endif %}
+                        required
+                    >{{ definition_text }}</textarea>
+                    
+                    <div class="mt-2 text-xs text-gray-600">
+                        <details>
+                            <summary class="cursor-pointer text-blue-600 hover:text-blue-800">Показать примеры правил</summary>
+                            <div class="mt-2 space-y-2 bg-gray-50 p-3 rounded">
+                                <div><strong>VIP клиенты:</strong></div>
+                                <pre class="text-xs bg-white p-2 rounded overflow-x-auto">{"logic": "all", "conds": [{"field": "r_score", "op": ">=", "value": 4}, {"field": "f_score", "op": ">=", "value": 4}]}</pre>
+                                
+                                <div><strong>Риск оттока:</strong></div>
+                                <pre class="text-xs bg-white p-2 rounded overflow-x-auto">{"logic": "all", "conds": [{"field": "recency_days", "op": ">=", "value": 45}, {"field": "redeems_count", "op": ">=", "value": 1}]}</pre>
+                                
+                                <div><strong>Активные клиенты:</strong></div>
+                                <pre class="text-xs bg-white p-2 rounded overflow-x-auto">{"logic": "all", "conds": [{"field": "recency_days", "op": "<=", "value": 14}, {"field": "redeems_count", "op": ">=", "value": 2}]}</pre>
+                            </div>
+                        </details>
+                    </div>
+                </div>
+
+                <!-- Кнопки -->
+                {% if can_edit %}
+                    <div class="flex space-x-3">
+                        <button 
+                            type="submit"
+                            class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            💾 {{ is_editing|yesno:"Сохранить изменения,Создать сегмент" }}
+                        </button>
+                        
+                        {% if is_editing %}
+                            <a 
+                                href="{% url 'segments:rebuild' segment.id %}"
+                                class="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                            >
+                                🔄 Перестроить
+                            </a>
+                        {% endif %}
+                        
+                        <a 
+                            href="{% url 'segments:list' %}"
+                            class="px-6 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
+                        >
+                            ❌ Отмена
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="bg-yellow-50 border border-yellow-200 rounded p-4">
+                        <p class="text-yellow-800">
+                            🔒 Системные сегменты нельзя редактировать. Они обновляются автоматически.
+                        </p>
+                        <div class="mt-3">
+                            <a 
+                                href="{% url 'segments:list' %}"
+                                class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                            >
+                                ← Назад к списку
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </form>
+        </div>
+
+        <!-- Боковая панель с инсайтами -->
+        <div class="space-y-6">
+            <!-- Статистика сегмента -->
+            {% if insights %}
+                <div class="bg-white rounded-lg shadow p-4">
+                    <h3 class="font-medium text-gray-900 mb-3">📊 Статистика сегмента</h3>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Размер:</span>
+                            <span class="text-sm font-medium">{{ insights.size }} клиентов</span>
+                        </div>
+                        
+                        <div class="border-t pt-3">
+                            <div class="text-sm text-gray-600 mb-2">Средние RFM показатели:</div>
+                            <div class="grid grid-cols-3 gap-2 text-center">
+                                <div class="bg-green-50 p-2 rounded">
+                                    <div class="text-lg font-semibold text-green-600">{{ insights.avg_rfm.r }}</div>
+                                    <div class="text-xs text-green-800">Recency</div>
+                                </div>
+                                <div class="bg-blue-50 p-2 rounded">
+                                    <div class="text-lg font-semibold text-blue-600">{{ insights.avg_rfm.f }}</div>
+                                    <div class="text-xs text-blue-800">Frequency</div>
+                                </div>
+                                <div class="bg-purple-50 p-2 rounded">
+                                    <div class="text-lg font-semibold text-purple-600">{{ insights.avg_rfm.m }}</div>
+                                    <div class="text-xs text-purple-800">Monetary</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="border-t pt-3 space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Средняя давность:</span>
+                                <span class="text-sm font-medium">{{ insights.avg_recency|floatformat:0 }} дн.</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Общий LTV:</span>
+                                <span class="text-sm font-medium">{{ insights.total_ltv|floatformat:0 }} ₸</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Средний LTV:</span>
+                                <span class="text-sm font-medium">{{ insights.avg_ltv|floatformat:0 }} ₸</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Next Best Promo рекомендации -->
+            {% if insights.recommendations %}
+                <div class="bg-blue-50 rounded-lg border border-blue-200 p-4">
+                    <h3 class="font-medium text-blue-900 mb-3">💡 Next Best Promo</h3>
+                    
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <span class="text-blue-700 font-medium">Скидка:</span>
+                            <span class="text-blue-900">{{ insights.recommendations.discount }}</span>
+                        </div>
+                        
+                        <div>
+                            <span class="text-blue-700 font-medium">Длительность:</span>
+                            <span class="text-blue-900">{{ insights.recommendations.duration_days }} дней</span>
+                        </div>
+                        
+                        <div>
+                            <span class="text-blue-700 font-medium">CTA:</span>
+                            <span class="text-blue-900">"{{ insights.recommendations.cta }}"</span>
+                        </div>
+                        
+                        {% if insights.recommendations.recommended_channels %}
+                            <div>
+                                <span class="text-blue-700 font-medium">Каналы:</span>
+                                <span class="text-blue-900">{{ insights.recommendations.recommended_channels|join:", " }}</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if insights.recommendations.timing %}
+                            <div>
+                                <span class="text-blue-700 font-medium">Время:</span>
+                                <span class="text-blue-900">{{ insights.recommendations.timing }}</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if insights.recommendations.notes %}
+                            <div class="border-t border-blue-200 pt-3">
+                                <span class="text-blue-700 font-medium">Рекомендации:</span>
+                                <p class="text-blue-800 mt-1">{{ insights.recommendations.notes }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Справка по полям -->
+            <div class="bg-gray-50 rounded-lg p-4">
+                <h3 class="font-medium text-gray-900 mb-3">📋 Доступные поля</h3>
+                
+                <div class="space-y-2 text-xs">
+                    <div><code class="bg-white px-1 rounded">recency_days</code> - дни с последнего погашения</div>
+                    <div><code class="bg-white px-1 rounded">issues_count</code> - количество выданных купонов</div>
+                    <div><code class="bg-white px-1 rounded">redeems_count</code> - количество погашений</div>
+                    <div><code class="bg-white px-1 rounded">r_score</code> - Recency скор (1-5)</div>
+                    <div><code class="bg-white px-1 rounded">f_score</code> - Frequency скор (1-5)</div>
+                    <div><code class="bg-white px-1 rounded">m_score</code> - Monetary скор (1-5)</div>
+                    <div><code class="bg-white px-1 rounded">redeem_amount_total</code> - общая сумма погашений</div>
+                    <div><code class="bg-white px-1 rounded">first_seen_days_ago</code> - дней с регистрации</div>
+                    <div><code class="bg-white px-1 rounded">last_issue_days_ago</code> - дней с последней выдачи</div>
+                </div>
+                
+                <div class="mt-3 pt-3 border-t border-gray-200">
+                    <div class="text-gray-700 font-medium mb-2">Операторы:</div>
+                    <div class="space-y-1 text-xs">
+                        <div><code class="bg-white px-1 rounded"><=</code>, <code class="bg-white px-1 rounded">>=</code>, <code class="bg-white px-1 rounded">=</code></div>
+                        <div><code class="bg-white px-1 rounded"><</code>, <code class="bg-white px-1 rounded">></code></div>
+                        <div><code class="bg-white px-1 rounded">between</code> - [мин, макс]</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

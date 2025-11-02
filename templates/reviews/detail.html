@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block title %}Отзыв — {{ review.business.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-semibold">📝 Детали отзыва</h1>
+            <p class="text-gray-600">{{ review.created_at|date:"d.m.Y H:i" }}</p>
+        </div>
+        <a href="{% url 'reviews:list' %}" class="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50">
+            ← Назад к списку
+        </a>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <!-- Заголовок отзыва -->
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="text-3xl text-yellow-500">{{ review.rating }}★</div>
+                    <div>
+                        <h2 class="text-lg font-medium text-gray-900">
+                            Отзыв для {{ review.business.name }}
+                        </h2>
+                        {% if review.campaign %}
+                            <p class="text-sm text-gray-500">
+                                Кампания: {{ review.campaign.name }}
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    {% if review.is_published %}
+                        <span class="px-3 py-1 text-sm font-medium bg-green-100 text-green-800 rounded-full">
+                            ✅ Опубликован
+                        </span>
+                    {% else %}
+                        <span class="px-3 py-1 text-sm font-medium bg-red-100 text-red-800 rounded-full">
+                            ❌ Скрыт
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Содержание отзыва -->
+        <div class="px-6 py-6">
+            {% if review.text %}
+                <div class="mb-6">
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Комментарий:</h3>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-gray-900 whitespace-pre-line">{{ review.text }}</p>
+                    </div>
+                </div>
+            {% else %}
+                <div class="mb-6">
+                    <p class="text-gray-500 italic">Клиент оставил только оценку без комментария.</p>
+                </div>
+            {% endif %}
+
+            <!-- Контактная информация -->
+            {% if review.phone or review.email %}
+                <div class="mb-6">
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Контактная информация:</h3>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        {% if review.phone %}
+                            <div class="flex items-center mb-2">
+                                <span class="text-gray-500 mr-2">📞</span>
+                                <span class="font-mono">{{ review.phone }}</span>
+                            </div>
+                        {% endif %}
+                        {% if review.email %}
+                            <div class="flex items-center">
+                                <span class="text-gray-500 mr-2">📧</span>
+                                <span>{{ review.email }}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Дополнительная информация -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Дата создания:</h3>
+                    <p class="text-gray-900">{{ review.created_at|date:"d.m.Y H:i:s" }}</p>
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Согласие на публикацию:</h3>
+                    <p class="text-gray-900">
+                        {% if review.publish_consent %}
+                            ✅ Дано
+                        {% else %}
+                            ❌ Не дано
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Предупреждение о согласии -->
+            {% if not review.publish_consent and review.is_published %}
+                <div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-yellow-800">Внимание!</h3>
+                            <p class="mt-1 text-sm text-yellow-700">
+                                Клиент не дал согласие на публикацию, но отзыв помечен как опубликованный.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Действия -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <div class="flex justify-between items-center">
+                <div class="text-sm text-gray-500">
+                    ID отзыва: #{{ review.id }}
+                </div>
+                <form method="post" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" 
+                            class="px-4 py-2 {% if review.is_published %}bg-red-600 hover:bg-red-700{% else %}bg-green-600 hover:bg-green-700{% endif %} text-white rounded transition-colors">
+                        {% if review.is_published %}
+                            👁️‍🗨️ Скрыть отзыв
+                        {% else %}
+                            👁️ Опубликовать отзыв
+                        {% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Дополнительная информация -->
+    <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                </svg>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-blue-800">Управление публикацией</h3>
+                <div class="mt-2 text-sm text-blue-700">
+                    <ul class="list-disc list-inside space-y-1">
+                        <li>Опубликованные отзывы могут использоваться в маркетинговых материалах</li>
+                        <li>Скрытые отзывы видны только в административной панели</li>
+                        <li>Учитывайте согласие клиента на публикацию</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

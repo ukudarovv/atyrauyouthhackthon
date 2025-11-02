@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block title %}Google Wallet - Настройки{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-semibold">⚙️ Настройки Google Wallet</h1>
+            <p class="text-gray-600">{{ business.name }}</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'wallet:dashboard' %}" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                ← Назад к картам
+            </a>
+        </div>
+    </div>
+
+    <!-- Статус настроек -->
+    <div class="bg-white rounded-lg shadow mb-6">
+        <div class="px-6 py-4 border-b">
+            <h3 class="text-lg font-medium">🔧 Статус конфигурации</h3>
+        </div>
+        <div class="p-6">
+            {% if gw_configured %}
+            <div class="flex items-center space-x-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div class="flex-shrink-0">
+                    <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-green-800 font-medium">Google Wallet настроен</p>
+                    <p class="text-green-700 text-sm">Все необходимые настройки присутствуют</p>
+                </div>
+            </div>
+            {% else %}
+            <div class="flex items-center space-x-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div class="flex-shrink-0">
+                    <svg class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-red-800 font-medium">Google Wallet не настроен</p>
+                    <p class="text-red-700 text-sm">Необходимо добавить настройки в переменные окружения</p>
+                </div>
+            </div>
+            {% endif %}
+            
+            <dl class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Issuer ID</dt>
+                    <dd class="mt-1 text-sm text-gray-900 font-mono">
+                        {{ issuer_id|default:"❌ Не настроен" }}
+                    </dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Service Account</dt>
+                    <dd class="mt-1 text-sm text-gray-900">
+                        {% if gw_configured %}
+                            ✅ Настроен
+                        {% else %}
+                            ❌ Не настроен
+                        {% endif %}
+                    </dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    <!-- Инструкции по настройке -->
+    {% if not gw_configured %}
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+        <h3 class="text-lg font-medium text-blue-800 mb-4">📖 Инструкция по настройке</h3>
+        
+        <div class="space-y-6 text-sm">
+            <div>
+                <h4 class="font-medium text-blue-800 mb-2">1. Настройка Google Wallet Console</h4>
+                <ul class="list-disc list-inside space-y-1 text-blue-700 ml-4">
+                    <li>Перейдите в <a href="https://pay.google.com/business/console" target="_blank" class="underline">Google Wallet Console</a></li>
+                    <li>Создайте класс типа "Offer" или "Generic"</li>
+                    <li>Заполните профиль компании</li>
+                    <li>Добавьте тест-аккаунты для тестирования</li>
+                </ul>
+            </div>
+            
+            <div>
+                <h4 class="font-medium text-blue-800 mb-2">2. Создание Service Account</h4>
+                <ul class="list-disc list-inside space-y-1 text-blue-700 ml-4">
+                    <li>В Google Cloud Console создайте Service Account</li>
+                    <li>Сгенерируйте JSON ключ</li>
+                    <li>Добавьте Service Account в Google Wallet Console как Editor</li>
+                    <li>Конвертируйте JSON в base64</li>
+                </ul>
+            </div>
+            
+            <div>
+                <h4 class="font-medium text-blue-800 mb-2">3. Настройка переменных окружения</h4>
+                <div class="bg-blue-100 p-3 rounded font-mono text-xs text-blue-800">
+GOOGLE_WALLET_ISSUER_ID=3388000000022972119<br>
+GOOGLE_WALLET_SA_KEY_JSON_BASE64=eyJ0eXBlIjoi...<br>
+GOOGLE_WALLET_CLASS_ID=3388000000022972119.coffee_offer_v1
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Тестирование -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b">
+            <h3 class="text-lg font-medium">🧪 Тестирование</h3>
+        </div>
+        <div class="p-6">
+            {% if gw_configured %}
+            <div class="space-y-4">
+                <p class="text-sm text-gray-600">
+                    Для тестирования Google Wallet интеграции:
+                </p>
+                
+                <ol class="list-decimal list-inside space-y-2 text-sm text-gray-700">
+                    <li>Создайте купон в любой кампании</li>
+                    <li>Откройте страницу купона и нажмите "Создать Wallet карту"</li>
+                    <li>Скопируйте ссылку "Add to Google Wallet"</li>
+                    <li>Откройте ссылку на Android устройстве с тестовым аккаунтом</li>
+                    <li>Карта должна появиться в Google Wallet</li>
+                </ol>
+                
+                <div class="bg-yellow-50 border border-yellow-200 rounded p-4 mt-4">
+                    <p class="text-yellow-800 text-sm">
+                        <strong>⚠️ Важно:</strong> В демо-режиме карты видны только тестовым аккаунтам, 
+                        добавленным в Google Wallet Console.
+                    </p>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-gray-500">
+                Сначала настройте Google Wallet для начала тестирования.
+            </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Полезные ссылки -->
+    <div class="bg-gray-50 rounded-lg p-6 mt-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">🔗 Полезные ссылки</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+                <h4 class="font-medium text-gray-800 mb-2">Документация</h4>
+                <ul class="space-y-1 text-blue-600">
+                    <li><a href="https://developers.google.com/wallet" target="_blank" class="hover:underline">Google Wallet API Docs</a></li>
+                    <li><a href="https://developers.google.com/wallet/generic/rest/get-started" target="_blank" class="hover:underline">Getting Started Guide</a></li>
+                    <li><a href="https://developers.google.com/wallet/generic/rest/test-app" target="_blank" class="hover:underline">Testing Guide</a></li>
+                </ul>
+            </div>
+            
+            <div>
+                <h4 class="font-medium text-gray-800 mb-2">Консоли</h4>
+                <ul class="space-y-1 text-blue-600">
+                    <li><a href="https://pay.google.com/business/console" target="_blank" class="hover:underline">Google Wallet Console</a></li>
+                    <li><a href="https://console.cloud.google.com" target="_blank" class="hover:underline">Google Cloud Console</a></li>
+                    <li><a href="https://developers.google.com/oauthplayground" target="_blank" class="hover:underline">OAuth 2.0 Playground</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

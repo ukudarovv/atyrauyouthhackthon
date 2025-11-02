@@ -1,0 +1,408 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ blast.name }} - Детали рассылки{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-semibold">📧 {{ blast.name }}</h1>
+            <p class="text-gray-600">{{ blast.business.name }} • {{ blast.get_trigger_display }}</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'blasts:list' %}" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                ← Назад к списку
+            </a>
+            {% if blast.can_start %}
+            <form method="post" action="{% url 'blasts:start' blast.pk %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                    🚀 Запустить
+                </button>
+            </form>
+            {% endif %}
+            {% if blast.status == 'running' %}
+            <form method="post" action="{% url 'blasts:pause' blast.pk %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700">
+                    ⏸️ Приостановить
+                </button>
+            </form>
+            {% endif %}
+            {% if blast.status == 'paused' %}
+            <form method="post" action="{% url 'blasts:resume' blast.pk %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    ▶️ Возобновить
+                </button>
+            </form>
+            {% endif %}
+            {% if blast.status in 'running,paused' %}
+            <form method="post" action="{% url 'blasts:cancel' blast.pk %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700" 
+                        onclick="return confirm('Вы уверены, что хотите отменить рассылку?')">
+                    ❌ Отменить
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Статус и основные метрики -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white p-6 rounded-lg shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Статус</p>
+                    <p class="text-2xl font-semibold">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                            {% if blast.status == 'running' %}bg-green-100 text-green-800
+                            {% elif blast.status == 'completed' %}bg-gray-100 text-gray-800
+                            {% elif blast.status == 'draft' %}bg-yellow-100 text-yellow-800
+                            {% elif blast.status == 'paused' %}bg-orange-100 text-orange-800
+                            {% elif blast.status == 'cancelled' %}bg-red-100 text-red-800
+                            {% else %}bg-blue-100 text-blue-800{% endif %}">
+                            {{ blast.get_status_display }}
+                        </span>
+                    </p>
+                </div>
+                <div class="text-3xl">
+                    {% if blast.status == 'running' %}🚀
+                    {% elif blast.status == 'completed' %}✅
+                    {% elif blast.status == 'draft' %}📝
+                    {% elif blast.status == 'paused' %}⏸️
+                    {% elif blast.status == 'cancelled' %}❌
+                    {% else %}📧{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <span class="text-blue-600 text-sm font-medium">👥</span>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Получатели</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ blast.total_recipients }}</p>
+                    <p class="text-xs text-gray-500">{{ blast.sent_count }} отправлено</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <span class="text-green-600 text-sm font-medium">📈</span>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Доставляемость</p>
+                    <p class="text-2xl font-semibold text-gray-900">
+                        {% if blast.sent_count > 0 %}
+                            {{ blast.delivery_rate|floatformat:1 }}%
+                        {% else %}
+                            —
+                        {% endif %}
+                    </p>
+                    <p class="text-xs text-gray-500">{{ blast.delivered_count }}/{{ blast.sent_count }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <span class="text-purple-600 text-sm font-medium">💰</span>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Стоимость</p>
+                    <p class="text-2xl font-semibold text-gray-900">${{ blast.current_cost|floatformat:2 }}</p>
+                    {% if blast.budget_cap %}
+                    <p class="text-xs text-gray-500">из ${{ blast.budget_cap|floatformat:0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Основная информация -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Описание -->
+            {% if blast.description %}
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-medium mb-3">📋 Описание</h3>
+                <p class="text-gray-700">{{ blast.description }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Стратегия каскада -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-medium mb-4">📱 Стратегия каскада</h3>
+                
+                {% if blast.strategy.cascade %}
+                <div class="space-y-3">
+                    {% for step in blast.strategy.cascade %}
+                    <div class="flex items-center justify-between p-3 border rounded">
+                        <div class="flex items-center space-x-3">
+                            <span class="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">
+                                {{ forloop.counter }}
+                            </span>
+                            <div>
+                                <span class="font-medium">
+                                    {% if step.channel == 'whatsapp' %}📱 WhatsApp
+                                    {% elif step.channel == 'sms' %}📱 SMS
+                                    {% elif step.channel == 'email' %}📧 Email
+                                    {% elif step.channel == 'telegram' %}💬 Telegram
+                                    {% else %}{{ step.channel|title }}{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            {% if step.timeout_min > 0 %}
+                                Timeout: {{ step.timeout_min }} мин
+                            {% else %}
+                                Финальный
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500">Стратегия не настроена</p>
+                {% endif %}
+            </div>
+
+            <!-- Аналитика по каналам -->
+            {% if analytics.channels %}
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-medium mb-4">📊 Аналитика по каналам</h3>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Канал</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Отправлено</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Доставлено</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Клики</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Стоимость</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for channel, stats in analytics.channels.items %}
+                            <tr>
+                                <td class="px-4 py-2 text-sm font-medium text-gray-900">
+                                    {% if channel == 'whatsapp' %}📱 WhatsApp
+                                    {% elif channel == 'sms' %}📱 SMS
+                                    {% elif channel == 'email' %}📧 Email
+                                    {% elif channel == 'telegram' %}💬 Telegram
+                                    {% else %}{{ channel|title }}{% endif %}
+                                </td>
+                                <td class="px-4 py-2 text-sm text-gray-900">{{ stats.sent }}</td>
+                                <td class="px-4 py-2 text-sm text-gray-900">
+                                    {{ stats.delivered }}
+                                    <span class="text-xs text-gray-500">({{ stats.delivery_rate|floatformat:1 }}%)</span>
+                                </td>
+                                <td class="px-4 py-2 text-sm text-gray-900">
+                                    {{ stats.clicked }}
+                                    <span class="text-xs text-gray-500">({{ stats.click_rate|floatformat:1 }}%)</span>
+                                </td>
+                                <td class="px-4 py-2 text-sm text-gray-900">${{ stats.cost|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Последние попытки доставки -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-medium mb-4">📨 Последние попытки доставки</h3>
+                
+                {% if recent_attempts %}
+                <div class="space-y-3">
+                    {% for attempt in recent_attempts %}
+                    <div class="flex items-center justify-between p-3 border rounded">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex-shrink-0">
+                                {% if attempt.channel == 'whatsapp' %}📱
+                                {% elif attempt.channel == 'sms' %}📱
+                                {% elif attempt.channel == 'email' %}📧
+                                {% elif attempt.channel == 'telegram' %}💬
+                                {% else %}📬{% endif %}
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">
+                                    {{ attempt.contact_point.value }}
+                                </div>
+                                <div class="text-xs text-gray-500">
+                                    {{ attempt.blast_recipient.customer.phone_e164 }}
+                                    {% if attempt.blast_recipient.customer.tags.first_name %}
+                                        ({{ attempt.blast_recipient.customer.tags.first_name }})
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                                {% if attempt.status == 'sent' %}bg-blue-100 text-blue-800
+                                {% elif attempt.status == 'delivered' %}bg-green-100 text-green-800
+                                {% elif attempt.status == 'clicked' %}bg-purple-100 text-purple-800
+                                {% elif attempt.status == 'failed' %}bg-red-100 text-red-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ attempt.get_status_display }}
+                            </span>
+                            <div class="text-xs text-gray-500 mt-1">
+                                {{ attempt.created_at|date:"d.m H:i" }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500">Пока нет попыток доставки</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Боковая панель -->
+        <div class="space-y-6">
+            <!-- Информация о рассылке -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-medium mb-4">ℹ️ Информация</h3>
+                
+                <dl class="space-y-3">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Создана</dt>
+                        <dd class="text-sm text-gray-900">{{ blast.created_at|date:"d.m.Y H:i" }}</dd>
+                    </div>
+                    
+                    {% if blast.started_at %}
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Запущена</dt>
+                        <dd class="text-sm text-gray-900">{{ blast.started_at|date:"d.m.Y H:i" }}</dd>
+                    </div>
+                    {% endif %}
+                    
+                    {% if blast.completed_at %}
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Завершена</dt>
+                        <dd class="text-sm text-gray-900">{{ blast.completed_at|date:"d.m.Y H:i" }}</dd>
+                    </div>
+                    {% endif %}
+                    
+                    {% if blast.segment %}
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Сегмент</dt>
+                        <dd class="text-sm text-gray-900">{{ blast.segment.name }}</dd>
+                    </div>
+                    {% endif %}
+                    
+                    {% if blast.schedule_at %}
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Запланирована на</dt>
+                        <dd class="text-sm text-gray-900">{{ blast.schedule_at|date:"d.m.Y H:i" }}</dd>
+                    </div>
+                    {% endif %}
+                </dl>
+            </div>
+
+            <!-- Получатели -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-medium mb-4">👥 Получатели</h3>
+                
+                {% if recent_recipients %}
+                <div class="space-y-3 mb-4">
+                    {% for recipient in recent_recipients %}
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-sm font-medium text-gray-900">
+                                {{ recipient.customer.phone_e164 }}
+                            </div>
+                            {% if recipient.customer.tags.first_name %}
+                            <div class="text-xs text-gray-500">
+                                {{ recipient.customer.tags.first_name }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                            {% if recipient.status == 'pending' %}bg-yellow-100 text-yellow-800
+                            {% elif recipient.status == 'processing' %}bg-blue-100 text-blue-800
+                            {% elif recipient.status == 'completed' %}bg-green-100 text-green-800
+                            {% elif recipient.status == 'failed' %}bg-red-100 text-red-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ recipient.get_status_display }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                {% if blast.total_recipients > recent_recipients|length %}
+                <p class="text-xs text-gray-500">
+                    Показано {{ recent_recipients|length }} из {{ blast.total_recipients }}
+                </p>
+                {% endif %}
+                {% else %}
+                <p class="text-gray-500">Получатели не созданы</p>
+                {% endif %}
+            </div>
+
+            <!-- Действия -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-medium mb-4">⚡ Действия</h3>
+                
+                <div class="space-y-3">
+                    <a href="{% url 'blasts:edit' blast.pk %}" 
+                       class="block w-full text-center px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                        ✏️ Редактировать
+                    </a>
+                    
+                    <a href="{% url 'blasts:export' blast.pk %}" 
+                       class="block w-full text-center px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                        📊 Экспорт результатов
+                    </a>
+                    
+                    <button onclick="loadAnalytics()" 
+                            class="block w-full text-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        📈 Обновить аналитику
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function loadAnalytics() {
+    fetch('{% url "blasts:analytics" blast.pk %}')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Analytics updated:', data);
+            // Можно обновить данные на странице без перезагрузки
+            location.reload(); // Для простоты перезагружаем страницу
+        })
+        .catch(error => {
+            console.error('Error loading analytics:', error);
+            alert('Ошибка загрузки аналитики');
+        });
+}
+
+// Автообновление каждые 30 секунд для активных рассылок
+{% if blast.status == 'running' %}
+setInterval(function() {
+    if (document.visibilityState === 'visible') {
+        loadAnalytics();
+    }
+}, 30000);
+{% endif %}
+</script>
+{% endblock %}

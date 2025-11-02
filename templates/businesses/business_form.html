@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if form.instance.pk %}Редактировать бизнес{% else %}Создать бизнес{% endif %}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-semibold mb-6">
+        {% if form.instance.pk %}Редактировать бизнес{% else %}Создать бизнес{% endif %}
+    </h1>
+    
+    <form method="post" class="bg-white p-6 rounded-lg shadow">
+        {% csrf_token %}
+        
+        <div class="space-y-6">
+            <!-- Название -->
+            <div>
+                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Название бизнеса *
+                </label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Телефон -->
+            <div>
+                <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Телефон
+                </label>
+                {{ form.phone }}
+                {% if form.phone.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.phone.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Адрес -->
+            <div>
+                <label for="{{ form.address.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Адрес
+                </label>
+                {{ form.address }}
+                {% if form.address.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.address.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Часовой пояс -->
+                <div>
+                    <label for="{{ form.timezone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Часовой пояс
+                    </label>
+                    {{ form.timezone }}
+                    {% if form.timezone.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.timezone.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Цвет бренда -->
+                <div>
+                    <label for="{{ form.brand_color.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Цвет бренда
+                    </label>
+                    {{ form.brand_color }}
+                    {% if form.brand_color.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.brand_color.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Контакты -->
+            <div>
+                <label for="{{ form.contacts.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Дополнительные контакты
+                </label>
+                {{ form.contacts }}
+                <p class="mt-1 text-sm text-gray-500">
+                    JSON формат: {"email": "test@test.com", "website": "https://example.com"}
+                </p>
+                {% if form.contacts.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.contacts.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="mt-8 flex justify-between">
+            <a href="{% url 'businesses:list' %}" class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">
+                Отмена
+            </a>
+            <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                {% if form.instance.pk %}Сохранить изменения{% else %}Создать бизнес{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+/* Стили для полей формы */
+form input, form select, form textarea {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    margin-top: 0.25rem;
+}
+
+form input:focus, form select:focus, form textarea:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: #3b82f6;
+    border-color: #3b82f6;
+}
+
+form input[type="color"] {
+    padding: 0.25rem;
+    height: 2.5rem;
+    width: 100%;
+}
+</style>
+{% endblock %}

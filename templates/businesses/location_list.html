@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Локации{% endblock %}
+
+{% block content %}
+{% if not current_business %}
+<div class="text-center py-12">
+    <div class="text-6xl mb-4">🏢</div>
+    <h3 class="text-lg font-medium text-gray-900 mb-2">Сначала выберите бизнес</h3>
+    <p class="text-gray-500 mb-6">Чтобы управлять локациями, нужно выбрать активный бизнес</p>
+    <a href="{% url 'businesses:list' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        Перейти к бизнесам
+    </a>
+</div>
+{% else %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-semibold">Локации</h1>
+        <p class="text-gray-600">{{ current_business.name }}</p>
+    </div>
+    <a href="{% url 'businesses:location_create' %}" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+        Добавить локацию
+    </a>
+</div>
+
+<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for l in locations %}
+    <div class="bg-white p-6 rounded-lg shadow border {% if not l.is_active %}opacity-60{% endif %}">
+        <div class="flex items-start justify-between mb-4">
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold mb-1">{{ l.name }}</h3>
+                {% if l.address %}
+                    <p class="text-sm text-gray-600 mb-2">{{ l.address }}</p>
+                {% endif %}
+                {% if l.geo_lat and l.geo_lng %}
+                    <p class="text-xs text-gray-500">{{ l.geo_lat }}, {{ l.geo_lng }}</p>
+                {% endif %}
+            </div>
+            <div class="flex items-center">
+                {% if l.is_active %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Активна
+                    </span>
+                {% else %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        Неактивна
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if l.opening_hours %}
+        <div class="text-sm text-gray-600 mb-4">
+            <p class="font-medium">Режим работы:</p>
+            <div class="text-xs mt-1">
+                {% for day, hours in l.opening_hours.items %}
+                    <div>{{ day }}: {{ hours }}</div>
+                {% empty %}
+                    <div class="text-gray-400">Не указан</div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="text-sm text-gray-500 mb-4">
+            <p>Создана: {{ l.created_at|date:"d.m.Y" }}</p>
+        </div>
+        
+        <div class="flex space-x-3">
+            <a href="{% url 'businesses:location_edit' l.id %}" class="flex-1 text-center px-3 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+                Редактировать
+            </a>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-span-full">
+        <div class="text-center py-12">
+            <div class="text-6xl mb-4">📍</div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Пока нет локаций</h3>
+            <p class="text-gray-500 mb-6">Добавьте первую локацию для {{ current_business.name }}</p>
+            <a href="{% url 'businesses:location_create' %}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                Добавить первую локацию
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if locations %}
+<div class="mt-8 bg-green-50 border border-green-200 rounded-lg p-4">
+    <div class="flex">
+        <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+            </svg>
+        </div>
+        <div class="ml-3">
+            <h3 class="text-sm font-medium text-green-800">Подсказка</h3>
+            <p class="mt-1 text-sm text-green-700">
+                В каждой локации можно настроить индивидуальные параметры: режим работы, координаты для карт, статус активности.
+            </p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ template.name }} - Детали шаблона{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-semibold">📝 {{ template.name }}</h1>
+            <p class="text-gray-600">
+                {% if template.channel == 'email' %}📧 Email
+                {% elif template.channel == 'sms' %}📱 SMS
+                {% elif template.channel == 'whatsapp' %}📱 WhatsApp
+                {% elif template.channel == 'telegram' %}💬 Telegram
+                {% elif template.channel == 'instagram' %}📸 Instagram
+                {% elif template.channel == 'wallet' %}📱 Wallet
+                {% else %}{{ template.get_channel_display }}{% endif %}
+                • {{ template.locale|upper }}
+                {% if template.is_active %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 ml-2">
+                        ✅ Активен
+                    </span>
+                {% else %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 ml-2">
+                        ❌ Неактивен
+                    </span>
+                {% endif %}
+            </p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'blasts:template_list' %}" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                ← Назад к списку
+            </a>
+            <a href="{% url 'blasts:template_edit' template.pk %}" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                ✏️ Редактировать
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Основное содержимое -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Предпросмотр -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-medium mb-4">👁️ Предпросмотр сообщения</h3>
+                
+                <div class="border rounded p-4 bg-gray-50">
+                    {% if template.channel == 'email' and template.subject %}
+                    <div class="mb-2"><strong>📧 Email</strong></div>
+                    <div class="mb-2"><strong>Тема:</strong> {{ template.subject }}</div>
+                    {% elif template.channel == 'sms' %}
+                    <div class="mb-2"><strong>📱 SMS</strong></div>
+                    {% elif template.channel == 'whatsapp' %}
+                    <div class="mb-2"><strong>📱 WhatsApp</strong></div>
+                    {% elif template.channel == 'telegram' %}
+                    <div class="mb-2"><strong>💬 Telegram</strong></div>
+                    {% endif %}
+                    
+                    <div class="whitespace-pre-wrap">{{ template.body_text }}</div>
+                    
+                    {% if template.channel == 'email' and template.body_html %}
+                    <div class="mt-4 pt-4 border-t"><strong>HTML версия:</strong></div>
+                    <div class="mt-2 p-3 border rounded bg-white">{{ template.body_html|safe }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="mt-4 text-sm text-gray-500">
+                    Длина текста: {{ template.body_text|length }} символов
+                    {% if template.channel == 'sms' %}
+                        {% if template.body_text|length > 160 %}
+                            <span class="text-red-600 font-medium">(превышен лимит SMS: 160)</span>
+                        {% else %}
+                            <span class="text-green-600">(в пределах лимита SMS)</span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Переменные -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-medium mb-4">🔧 Используемые переменные</h3>
+                
+                {% if template.variables %}
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {% for variable in template.variables %}
+                    <div class="p-3 border rounded bg-blue-50">
+                        <code class="text-sm font-mono text-blue-600">{{{{ variable }}}}</code>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500">В этом шаблоне не используются переменные</p>
+                {% endif %}
+                
+                <div class="mt-4">
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Доступные переменные:</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        <span class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded font-mono">customer_first_name</span>
+                        <span class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded font-mono">customer_phone</span>
+                        <span class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded font-mono">business_name</span>
+                        <span class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded font-mono">coupon_code</span>
+                        <span class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded font-mono">coupon_expires_at</span>
+                        <span class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded font-mono">blast_name</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Статистика использования -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-medium mb-4">📊 Статистика использования</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-blue-600">{{ template.usage_count|default:0 }}</div>
+                        <div class="text-sm text-gray-500">Использований в рассылках</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-green-600">{{ template.delivery_rate|default:0|floatformat:1 }}%</div>
+                        <div class="text-sm text-gray-500">Доставляемость</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-purple-600">{{ template.click_rate|default:0|floatformat:1 }}%</div>
+                        <div class="text-sm text-gray-500">Кликабельность</div>
+                    </div>
+                </div>
+                
+                {% if template.usage_count > 0 %}
+                <div class="mt-6">
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">Последние рассылки с этим шаблоном:</h4>
+                    <!-- Здесь можно добавить список последних рассылок -->
+                    <p class="text-sm text-gray-500">Функциональность в разработке</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Боковая панель -->
+        <div class="space-y-6">
+            <!-- Информация о шаблоне -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-medium mb-4">ℹ️ Информация</h3>
+                
+                <dl class="space-y-3">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Канал</dt>
+                        <dd class="text-sm text-gray-900">
+                            {% if template.channel == 'email' %}📧 Email
+                            {% elif template.channel == 'sms' %}📱 SMS
+                            {% elif template.channel == 'whatsapp' %}📱 WhatsApp
+                            {% elif template.channel == 'telegram' %}💬 Telegram
+                            {% elif template.channel == 'instagram' %}📸 Instagram
+                            {% elif template.channel == 'wallet' %}📱 Wallet
+                            {% else %}{{ template.get_channel_display }}{% endif %}
+                        </dd>
+                    </div>
+                    
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Язык</dt>
+                        <dd class="text-sm text-gray-900">
+                            {% if template.locale == 'ru' %}🇷🇺 Русский
+                            {% elif template.locale == 'kz' %}🇰🇿 Казахский
+                            {% elif template.locale == 'en' %}🇺🇸 English
+                            {% else %}{{ template.locale|upper }}{% endif %}
+                        </dd>
+                    </div>
+                    
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Статус</dt>
+                        <dd class="text-sm text-gray-900">
+                            {% if template.is_active %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    ✅ Активен
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    ❌ Неактивен
+                                </span>
+                            {% endif %}
+                        </dd>
+                    </div>
+                    
+                    {% if template.a_b_bucket %}
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">A/B тест</dt>
+                        <dd class="text-sm text-gray-900">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                🧪 Вариант {{ template.a_b_bucket }}
+                            </span>
+                        </dd>
+                    </div>
+                    {% endif %}
+                    
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Создан</dt>
+                        <dd class="text-sm text-gray-900">{{ template.created_at|date:"d.m.Y H:i" }}</dd>
+                    </div>
+                    
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Обновлен</dt>
+                        <dd class="text-sm text-gray-900">{{ template.updated_at|date:"d.m.Y H:i" }}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <!-- Действия -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-medium mb-4">⚡ Действия</h3>
+                
+                <div class="space-y-3">
+                    <a href="{% url 'blasts:template_edit' template.pk %}" 
+                       class="block w-full text-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        ✏️ Редактировать шаблон
+                    </a>
+                    
+                    <button onclick="duplicateTemplate()" 
+                            class="block w-full text-center px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                        📄 Дублировать шаблон
+                    </button>
+                    
+                    <button onclick="testTemplate()" 
+                            class="block w-full text-center px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                        📨 Тестовая отправка
+                    </button>
+                    
+                    {% if not template.is_active %}
+                    <form method="post" action="{% url 'blasts:template_activate' template.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" 
+                                class="block w-full text-center px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                            ✅ Активировать
+                        </button>
+                    </form>
+                    {% else %}
+                    <form method="post" action="{% url 'blasts:template_deactivate' template.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" 
+                                class="block w-full text-center px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700">
+                            ⏸️ Деактивировать
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Связанные рассылки -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-medium mb-4">📧 Связанные рассылки</h3>
+                
+                {% if template.usage_count > 0 %}
+                <p class="text-sm text-gray-600 mb-3">
+                    Этот шаблон использовался в {{ template.usage_count }} рассылках
+                </p>
+                <!-- Здесь можно добавить список рассылок -->
+                <div class="text-center">
+                    <button class="text-sm text-blue-600 hover:text-blue-800">
+                        Показать все рассылки
+                    </button>
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-500">
+                    Этот шаблон еще не использовался в рассылках
+                </p>
+                <div class="mt-3">
+                    <a href="{% url 'blasts:create' %}" 
+                       class="text-sm text-blue-600 hover:text-blue-800">
+                        Создать рассылку с этим шаблоном
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function duplicateTemplate() {
+    if (confirm('Создать копию этого шаблона?')) {
+        // Здесь будет логика дублирования
+        alert('Функциональность дублирования в разработке');
+    }
+}
+
+function testTemplate() {
+    const phone = prompt('Введите номер телефона для тестовой отправки:');
+    if (phone) {
+        // Здесь будет логика тестовой отправки
+        alert('Тестовая отправка в разработке');
+    }
+}
+</script>
+{% endblock %}

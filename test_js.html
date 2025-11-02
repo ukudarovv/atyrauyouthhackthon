@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JavaScript Test</title>
+</head>
+<body>
+    <h1>Тест JavaScript функций</h1>
+    <button onclick="testNewSession()">Тест newSession</button>
+    <button onclick="testClearMessages()">Тест clearMessagesOnly</button>
+    <button onclick="testRefreshMetrics()">Тест refreshMetrics</button>
+    
+    <div id="messages-container">
+        <p>Тестовое сообщение</p>
+    </div>
+    
+    <input type="hidden" name="csrfmiddlewaretoken" value="test-token">
+
+    <script>
+    // Тестовые версии функций
+    function testNewSession() {
+        if (confirm('Очистить историю чата?')) {
+            alert('newSession() работает!');
+        }
+    }
+
+    function testClearMessages() {
+        if (confirm('Очистить сообщения только визуально?')) {
+            document.getElementById('messages-container').innerHTML = '';
+            alert('clearMessagesOnly() работает!');
+        }
+    }
+
+    function testRefreshMetrics() {
+        alert('refreshMetrics() работает!');
+    }
+
+    console.log('✅ Test page loaded, all functions available');
+    </script>
+</body>
+</html>

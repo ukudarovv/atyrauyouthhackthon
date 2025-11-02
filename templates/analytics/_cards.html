@@ -1,0 +1,97 @@
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <!-- Просмотры -->
+    <div class="bg-white p-6 rounded-lg shadow">
+        <div class="flex items-center">
+            <div class="flex-1">
+                <div class="text-sm font-medium text-gray-500 uppercase tracking-wider">Просмотры</div>
+                <div class="text-3xl font-bold text-gray-900 mt-1">{{ data.views|default:0 }}</div>
+            </div>
+            <div class="flex-shrink-0">
+                <div class="text-2xl">👁️</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Клики -->
+    <div class="bg-white p-6 rounded-lg shadow">
+        <div class="flex items-center">
+            <div class="flex-1">
+                <div class="text-sm font-medium text-gray-500 uppercase tracking-wider">Клики</div>
+                <div class="text-3xl font-bold text-gray-900 mt-1">{{ data.clicks|default:0 }}</div>
+            </div>
+            <div class="flex-shrink-0">
+                <div class="text-2xl">👆</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Выдано купонов -->
+    <div class="bg-white p-6 rounded-lg shadow">
+        <div class="flex items-center">
+            <div class="flex-1">
+                <div class="text-sm font-medium text-gray-500 uppercase tracking-wider">Выдано купонов</div>
+                <div class="text-3xl font-bold text-green-600 mt-1">{{ data.issues|default:0 }}</div>
+            </div>
+            <div class="flex-shrink-0">
+                <div class="text-2xl">🎫</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Погашено купонов -->
+    <div class="bg-white p-6 rounded-lg shadow">
+        <div class="flex items-center">
+            <div class="flex-1">
+                <div class="text-sm font-medium text-gray-500 uppercase tracking-wider">Погашено купонов</div>
+                <div class="text-3xl font-bold text-red-600 mt-1">{{ data.redeems|default:0 }}</div>
+            </div>
+            <div class="flex-shrink-0">
+                <div class="text-2xl">💳</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CR Клик → Выдача -->
+    <div class="bg-white p-6 rounded-lg shadow">
+        <div class="flex items-center">
+            <div class="flex-1">
+                <div class="text-sm font-medium text-gray-500 uppercase tracking-wider">CR Клик → Выдача</div>
+                <div class="text-3xl font-bold text-blue-600 mt-1">{{ data.cr_click_issue|default:0 }}%</div>
+            </div>
+            <div class="flex-shrink-0">
+                <div class="text-2xl">📈</div>
+            </div>
+        </div>
+        <div class="mt-2">
+            <div class="text-xs text-gray-500">
+                {% if data.clicks %}
+                    из {{ data.clicks }} кликов
+                {% else %}
+                    нет кликов
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- CR Выдача → Погашение -->
+    <div class="bg-white p-6 rounded-lg shadow">
+        <div class="flex items-center">
+            <div class="flex-1">
+                <div class="text-sm font-medium text-gray-500 uppercase tracking-wider">CR Выдача → Погашение</div>
+                <div class="text-3xl font-bold text-purple-600 mt-1">{{ data.cr_issue_redeem|default:0 }}%</div>
+            </div>
+            <div class="flex-shrink-0">
+                <div class="text-2xl">🎯</div>
+            </div>
+        </div>
+        <div class="mt-2">
+            <div class="text-xs text-gray-500">
+                {% if data.issues %}
+                    из {{ data.issues }} выданных
+                {% else %}
+                    нет выданных купонов
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

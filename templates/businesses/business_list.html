@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Бизнесы{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-semibold">Ваши бизнесы</h1>
+    <a href="{% url 'businesses:create' %}" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        Создать бизнес
+    </a>
+</div>
+
+<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for b in businesses %}
+    <div class="bg-white p-6 rounded-lg shadow border {% if current_business.id == b.id %}ring-2 ring-blue-500{% endif %}">
+        <div class="flex items-start justify-between mb-4">
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold mb-1">{{ b.name }}</h3>
+                {% if b.phone %}
+                    <p class="text-sm text-gray-600 mb-1">{{ b.phone }}</p>
+                {% endif %}
+                {% if b.address %}
+                    <p class="text-sm text-gray-500">{{ b.address }}</p>
+                {% endif %}
+            </div>
+            {% if b.brand_color != '#111827' %}
+                <div class="w-6 h-6 rounded-full border" style="background-color: {{ b.brand_color }};"></div>
+            {% endif %}
+        </div>
+        
+        <div class="text-sm text-gray-500 mb-4">
+            <p>Локаций: {{ b.locations.count }}</p>
+            <p>Создан: {{ b.created_at|date:"d.m.Y" }}</p>
+        </div>
+        
+        <div class="flex space-x-3">
+            {% if current_business.id != b.id %}
+                <a href="{% url 'businesses:choose' b.id %}" class="flex-1 text-center px-3 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+                    Выбрать
+                </a>
+            {% else %}
+                <div class="flex-1 text-center px-3 py-2 bg-green-100 text-green-800 rounded text-sm">
+                    Активный
+                </div>
+            {% endif %}
+            <a href="{% url 'businesses:edit' b.id %}" class="px-3 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50">
+                Редактировать
+            </a>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-span-full">
+        <div class="text-center py-12">
+            <div class="text-6xl mb-4">🏢</div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Пока нет бизнесов</h3>
+            <p class="text-gray-500 mb-6">Создайте свой первый бизнес, чтобы начать работу с системой</p>
+            <a href="{% url 'businesses:create' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                Создать первый бизнес
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if businesses %}
+<div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
+    <div class="flex">
+        <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+            </svg>
+        </div>
+        <div class="ml-3">
+            <h3 class="text-sm font-medium text-blue-800">Быстрые действия</h3>
+            <div class="mt-2 text-sm text-blue-700">
+                <ul class="list-disc list-inside space-y-1">
+                    <li><a href="{% url 'businesses:locations' %}" class="underline">Управление локациями</a></li>
+                    {% if current_business %}
+                        <li><a href="/app/" class="underline">Перейти к продажам</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

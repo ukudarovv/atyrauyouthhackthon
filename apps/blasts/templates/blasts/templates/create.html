@@ -1,0 +1,333 @@
+{% extends 'base.html' %}
+
+{% block title %}Создать шаблон сообщения{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-semibold">📝 Создать шаблон сообщения</h1>
+            <p class="text-gray-600">{{ business.name }}</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'blasts:template_list' %}" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                ← Назад к списку
+            </a>
+        </div>
+    </div>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Основная информация -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-medium mb-4">📋 Основная информация</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+                        Название шаблона *
+                    </label>
+                    <input type="text" 
+                           id="name" 
+                           name="name" 
+                           required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Например: Приветственное сообщение">
+                </div>
+                
+                <div>
+                    <label for="channel" class="block text-sm font-medium text-gray-700 mb-1">
+                        Канал *
+                    </label>
+                    <select id="channel" 
+                            name="channel"
+                            required
+                            onchange="toggleChannelFields()"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Выберите канал</option>
+                        {% for channel_code, channel_name in channel_choices %}
+                        <option value="{{ channel_code }}">{{ channel_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="locale" class="block text-sm font-medium text-gray-700 mb-1">
+                        Язык
+                    </label>
+                    <select id="locale" 
+                            name="locale"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="ru">Русский</option>
+                        <option value="kz">Казахский</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Содержимое сообщения -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-medium mb-4">💬 Содержимое сообщения</h3>
+            
+            <!-- Тема (только для email) -->
+            <div id="subject-field" class="mb-4" style="display: none;">
+                <label for="subject" class="block text-sm font-medium text-gray-700 mb-1">
+                    Тема письма
+                </label>
+                <input type="text" 
+                       id="subject" 
+                       name="subject"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       placeholder="Например: Специальное предложение для вас!">
+            </div>
+            
+            <!-- Текстовая версия -->
+            <div class="mb-4">
+                <label for="body_text" class="block text-sm font-medium text-gray-700 mb-1">
+                    Текст сообщения *
+                </label>
+                <textarea id="body_text" 
+                          name="body_text" 
+                          required
+                          rows="6"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Привет {{customer_first_name}}! Добро пожаловать в {{business_name}}..."></textarea>
+                <p class="text-xs text-gray-500 mt-1">
+                    <span id="char-count">0</span> символов
+                    <span id="sms-limit" style="display: none;"> (лимит SMS: 160)</span>
+                </p>
+            </div>
+            
+            <!-- HTML версия (только для email) -->
+            <div id="html-field" class="mb-4" style="display: none;">
+                <label for="body_html" class="block text-sm font-medium text-gray-700 mb-1">
+                    HTML версия (опционально)
+                </label>
+                <textarea id="body_html" 
+                          name="body_html" 
+                          rows="8"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                          placeholder="<h1>Привет {{customer_first_name}}!</h1><p>Добро пожаловать в <strong>{{business_name}}</strong>...</p>"></textarea>
+                <p class="text-xs text-gray-500 mt-1">
+                    HTML разметка для красивых email писем
+                </p>
+            </div>
+        </div>
+
+        <!-- Переменные -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-medium mb-4">🔧 Переменные</h3>
+            <p class="text-sm text-gray-600 mb-4">
+                Используйте переменные в двойных фигурных скобках для персонализации сообщений
+            </p>
+            
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div class="p-3 border rounded">
+                    <code class="text-sm font-mono text-blue-600">{{customer_first_name}}</code>
+                    <p class="text-xs text-gray-500 mt-1">Имя клиента</p>
+                </div>
+                <div class="p-3 border rounded">
+                    <code class="text-sm font-mono text-blue-600">{{customer_phone}}</code>
+                    <p class="text-xs text-gray-500 mt-1">Телефон клиента</p>
+                </div>
+                <div class="p-3 border rounded">
+                    <code class="text-sm font-mono text-blue-600">{{business_name}}</code>
+                    <p class="text-xs text-gray-500 mt-1">Название бизнеса</p>
+                </div>
+                <div class="p-3 border rounded">
+                    <code class="text-sm font-mono text-blue-600">{{coupon_code}}</code>
+                    <p class="text-xs text-gray-500 mt-1">Код купона</p>
+                </div>
+                <div class="p-3 border rounded">
+                    <code class="text-sm font-mono text-blue-600">{{coupon_expires_at}}</code>
+                    <p class="text-xs text-gray-500 mt-1">Срок действия купона</p>
+                </div>
+                <div class="p-3 border rounded">
+                    <code class="text-sm font-mono text-blue-600">{{blast_name}}</code>
+                    <p class="text-xs text-gray-500 mt-1">Название рассылки</p>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <label for="variables_custom" class="block text-sm font-medium text-gray-700 mb-1">
+                    Дополнительные переменные (через запятую)
+                </label>
+                <input type="text" 
+                       id="variables_custom" 
+                       name="variables_custom"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       placeholder="promo_code, discount_percent, store_address">
+                <p class="text-xs text-gray-500 mt-1">
+                    Дополнительные переменные для использования в шаблоне
+                </p>
+            </div>
+        </div>
+
+        <!-- A/B тестирование -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-medium mb-4">🧪 A/B тестирование</h3>
+            
+            <div>
+                <label for="a_b_bucket" class="block text-sm font-medium text-gray-700 mb-1">
+                    Вариант для A/B теста
+                </label>
+                <select id="a_b_bucket" 
+                        name="a_b_bucket"
+                        class="w-full md:w-48 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Не участвует в A/B тесте</option>
+                    <option value="A">Вариант A</option>
+                    <option value="B">Вариант B</option>
+                </select>
+                <p class="text-xs text-gray-500 mt-1">
+                    Создайте два шаблона (A и B) для сравнения эффективности
+                </p>
+            </div>
+        </div>
+
+        <!-- Предпросмотр -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-medium mb-4">👁️ Предпросмотр</h3>
+            
+            <div class="border rounded p-4 bg-gray-50">
+                <div id="preview-content" class="text-gray-500">
+                    Заполните поля выше для предпросмотра сообщения
+                </div>
+            </div>
+            
+            <button type="button" 
+                    onclick="updatePreview()" 
+                    class="mt-3 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+                🔄 Обновить предпросмотр
+            </button>
+        </div>
+
+        <!-- Кнопки -->
+        <div class="flex justify-end space-x-3">
+            <a href="{% url 'blasts:template_list' %}" 
+               class="px-6 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50">
+                Отмена
+            </a>
+            <button type="submit" 
+                    class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                Создать шаблон
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+// Показать/скрыть поля в зависимости от выбранного канала
+function toggleChannelFields() {
+    const channel = document.getElementById('channel').value;
+    const subjectField = document.getElementById('subject-field');
+    const htmlField = document.getElementById('html-field');
+    const smsLimit = document.getElementById('sms-limit');
+    
+    // Поля для email
+    if (channel === 'email') {
+        subjectField.style.display = 'block';
+        htmlField.style.display = 'block';
+        smsLimit.style.display = 'none';
+        document.getElementById('subject').required = true;
+    } else {
+        subjectField.style.display = 'none';
+        htmlField.style.display = 'none';
+        document.getElementById('subject').required = false;
+    }
+    
+    // Лимит для SMS
+    if (channel === 'sms') {
+        smsLimit.style.display = 'inline';
+    } else {
+        smsLimit.style.display = 'none';
+    }
+    
+    updatePreview();
+}
+
+// Подсчет символов
+function updateCharCount() {
+    const bodyText = document.getElementById('body_text').value;
+    const charCount = document.getElementById('char-count');
+    charCount.textContent = bodyText.length;
+    
+    // Предупреждение для SMS
+    const channel = document.getElementById('channel').value;
+    if (channel === 'sms' && bodyText.length > 160) {
+        charCount.className = 'text-red-600 font-medium';
+    } else {
+        charCount.className = '';
+    }
+}
+
+// Обновление предпросмотра
+function updatePreview() {
+    const channel = document.getElementById('channel').value;
+    const subject = document.getElementById('subject').value;
+    const bodyText = document.getElementById('body_text').value;
+    const bodyHtml = document.getElementById('body_html').value;
+    
+    const preview = document.getElementById('preview-content');
+    
+    if (!bodyText) {
+        preview.innerHTML = '<span class="text-gray-500">Заполните поля выше для предпросмотра сообщения</span>';
+        return;
+    }
+    
+    // Заменяем переменные на примеры
+    let content = bodyText
+        .replace(/\{\{customer_first_name\}\}/g, 'Анна')
+        .replace(/\{\{customer_phone\}\}/g, '+77011234567')
+        .replace(/\{\{business_name\}\}/g, '{{ business.name }}')
+        .replace(/\{\{coupon_code\}\}/g, 'SAVE20')
+        .replace(/\{\{coupon_expires_at\}\}/g, '31.12.2024')
+        .replace(/\{\{blast_name\}\}/g, 'Летняя акция');
+    
+    let html = '';
+    
+    // Заголовок для разных каналов
+    if (channel === 'email') {
+        html += `<div class="mb-2"><strong>📧 Email</strong></div>`;
+        if (subject) {
+            html += `<div class="mb-2"><strong>Тема:</strong> ${subject.replace(/\{\{customer_first_name\}\}/g, 'Анна')}</div>`;
+        }
+    } else if (channel === 'sms') {
+        html += `<div class="mb-2"><strong>📱 SMS</strong></div>`;
+    } else if (channel === 'whatsapp') {
+        html += `<div class="mb-2"><strong>📱 WhatsApp</strong></div>`;
+    } else if (channel === 'telegram') {
+        html += `<div class="mb-2"><strong>💬 Telegram</strong></div>`;
+    }
+    
+    // Содержимое
+    html += `<div class="whitespace-pre-wrap">${content}</div>`;
+    
+    // HTML версия для email
+    if (channel === 'email' && bodyHtml) {
+        html += `<div class="mt-4 pt-4 border-t"><strong>HTML версия:</strong></div>`;
+        html += `<div class="mt-2 p-3 border rounded bg-white">${bodyHtml.replace(/\{\{customer_first_name\}\}/g, 'Анна').replace(/\{\{business_name\}\}/g, '{{ business.name }}')}</div>`;
+    }
+    
+    preview.innerHTML = html;
+}
+
+// Обработчики событий
+document.addEventListener('DOMContentLoaded', function() {
+    const bodyTextarea = document.getElementById('body_text');
+    
+    bodyTextarea.addEventListener('input', function() {
+        updateCharCount();
+        updatePreview();
+    });
+    
+    document.getElementById('subject').addEventListener('input', updatePreview);
+    document.getElementById('body_html').addEventListener('input', updatePreview);
+    
+    // Инициализация
+    updateCharCount();
+    toggleChannelFields();
+});
+</script>
+{% endblock %}

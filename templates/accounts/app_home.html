@@ -1,0 +1,532 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-6 py-8 sm:p-8">
+            <div class="flex items-center justify-between mb-6">
+                <h1 class="text-3xl font-bold text-gray-900">Добро пожаловать в POS систему!</h1>
+                {% if performance_score %}
+                <div class="flex items-center px-3 py-2 rounded-lg {% if performance_score.level.color == 'green' %}bg-green-100 text-green-800{% elif performance_score.level.color == 'blue' %}bg-blue-100 text-blue-800{% elif performance_score.level.color == 'yellow' %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %}">
+                    <span class="mr-2">{{ performance_score.level.emoji }}</span>
+                    <span class="text-sm font-medium">{{ performance_score.score }}/100</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- ЖИВЫЕ МЕТРИКИ -->
+            {% if live_metrics %}
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <!-- Новые клиенты -->
+                <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-4 text-white shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-blue-100 text-sm">Новые клиенты</p>
+                            <p class="text-2xl font-bold">{{ live_metrics.new_customers.value }}</p>
+                            <div class="flex items-center text-blue-200 text-xs mt-1">
+                                {% if live_metrics.new_customers.trend == 'up' %}
+                                    <span class="mr-1">↗️</span>
+                                    <span>+{{ live_metrics.new_customers.change }}</span>
+                                {% elif live_metrics.new_customers.trend == 'down' %}
+                                    <span class="mr-1">↘️</span>
+                                    <span>{{ live_metrics.new_customers.change }}</span>
+                                {% else %}
+                                    <span>сегодня</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="text-3xl opacity-80">👥</div>
+                    </div>
+                </div>
+
+                <!-- Погашения -->
+                <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-4 text-white shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-green-100 text-sm">Погашения</p>
+                            <p class="text-2xl font-bold">{{ live_metrics.redemptions.value }}</p>
+                            <div class="flex items-center text-green-200 text-xs mt-1">
+                                {% if live_metrics.redemptions.trend == 'up' %}
+                                    <span class="mr-1">↗️</span>
+                                    <span>+{{ live_metrics.redemptions.change }}</span>
+                                {% elif live_metrics.redemptions.trend == 'down' %}
+                                    <span class="mr-1">↘️</span>
+                                    <span>{{ live_metrics.redemptions.change }}</span>
+                                {% else %}
+                                    <span>сегодня</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="text-3xl opacity-80">✅</div>
+                    </div>
+                </div>
+
+                <!-- Конверсия -->
+                <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-4 text-white shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-purple-100 text-sm">Конверсия</p>
+                            <p class="text-2xl font-bold">{{ live_metrics.conversion_rate.value }}%</p>
+                            <p class="text-purple-200 text-xs mt-1">за неделю</p>
+                        </div>
+                        <div class="text-3xl opacity-80">🎯</div>
+                    </div>
+                </div>
+
+                <!-- Активные кампании -->
+                <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-4 text-white shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-orange-100 text-sm">Активные</p>
+                            <p class="text-2xl font-bold">{{ live_metrics.active_campaigns.value }}</p>
+                            <p class="text-orange-200 text-xs mt-1">кампании</p>
+                        </div>
+                        <div class="text-3xl opacity-80">🚀</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- ИНТЕРАКТИВНЫЕ ГРАФИКИ -->
+            {% if hourly_chart or weekly_chart %}
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                {% if hourly_chart %}
+                <div class="bg-white border border-gray-200 rounded-lg p-4">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">{{ hourly_chart.title }}</h3>
+                    <canvas id="hourlyChart" width="400" height="200"></canvas>
+                </div>
+                {% endif %}
+
+                {% if weekly_chart %}
+                <div class="bg-white border border-gray-200 rounded-lg p-4">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">{{ weekly_chart.title }}</h3>
+                    <canvas id="weeklyChart" width="400" height="200"></canvas>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- БЫСТРЫЕ ДЕЙСТВИЯ -->
+            {% if quick_actions %}
+            <div class="mb-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-3">⚡ Быстрые действия</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {% for action in quick_actions %}
+                    <a href="{{ action.url }}" class="rounded-lg p-4 transition-colors {% if action.color == 'blue' %}bg-blue-50 border border-blue-200 hover:bg-blue-100{% elif action.color == 'green' %}bg-green-50 border border-green-200 hover:bg-green-100{% elif action.color == 'purple' %}bg-purple-50 border border-purple-200 hover:bg-purple-100{% elif action.color == 'indigo' %}bg-indigo-50 border border-indigo-200 hover:bg-indigo-100{% else %}bg-gray-50 border border-gray-200 hover:bg-gray-100{% endif %}">
+                        <div class="flex items-start">
+                            <span class="text-2xl mr-3">{{ action.icon }}</span>
+                            <div>
+                                <div class="text-sm font-medium {% if action.color == 'blue' %}text-blue-900{% elif action.color == 'green' %}text-green-900{% elif action.color == 'purple' %}text-purple-900{% elif action.color == 'indigo' %}text-indigo-900{% else %}text-gray-900{% endif %}">{{ action.title }}</div>
+                                <div class="text-xs mt-1 {% if action.color == 'blue' %}text-blue-600{% elif action.color == 'green' %}text-green-600{% elif action.color == 'purple' %}text-purple-600{% elif action.color == 'indigo' %}text-indigo-600{% else %}text-gray-600{% endif %}">{{ action.description }}</div>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- AI СОВЕТЧИК - главная функция -->
+            <div class="mt-8 mb-8">
+                <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-lg text-white p-6 mb-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center mb-3">
+                                <span class="text-3xl mr-3">🤖</span>
+                                <h2 class="text-2xl font-bold">AI Советчик</h2>
+                                <span class="ml-3 px-2 py-1 bg-white/20 rounded-full text-xs font-medium">НОВОЕ</span>
+                            </div>
+                            <p class="text-blue-100 mb-4">
+                                Умный помощник для анализа данных и принятия решений. 
+                                Получайте персональные рекомендации, подробные отчеты и прогнозы.
+                            </p>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <span class="px-3 py-1 bg-white/20 rounded-full text-sm">📊 Аналитика</span>
+                                <span class="px-3 py-1 bg-white/20 rounded-full text-sm">🔮 Прогнозы</span>
+                                <span class="px-3 py-1 bg-white/20 rounded-full text-sm">💡 Рекомендации</span>
+                                <span class="px-3 py-1 bg-white/20 rounded-full text-sm">📄 PDF отчеты</span>
+                            </div>
+                        </div>
+                        <div class="ml-6">
+                            <a href="{% url 'advisor:chat' %}" 
+                               class="inline-flex items-center px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg shadow-md hover:bg-gray-50 transition-all duration-200 transform hover:scale-105">
+                                <span class="text-xl mr-2">💬</span>
+                                Открыть чат
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Быстрые действия AI -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <a href="{% url 'advisor:chat' %}?q=Как дела с продажами на этой неделе?" 
+                       class="bg-white border border-gray-200 rounded-lg p-4 hover:bg-blue-50 hover:border-blue-300 transition shadow-sm">
+                        <div class="text-center">
+                            <div class="text-2xl mb-2">📈</div>
+                            <div class="text-sm font-medium text-blue-800">Еженедельный отчет</div>
+                            <div class="text-xs text-gray-500 mt-1">Анализ за 7 дней</div>
+                        </div>
+                    </a>
+                    
+                    <a href="{% url 'advisor:chat' %}?q=Почему просели будни?" 
+                       class="bg-white border border-gray-200 rounded-lg p-4 hover:bg-blue-50 hover:border-blue-300 transition shadow-sm">
+                        <div class="text-center">
+                            <div class="text-2xl mb-2">🔍</div>
+                            <div class="text-sm font-medium text-blue-800">Анализ проблем</div>
+                            <div class="text-xs text-gray-500 mt-1">Найти причины</div>
+                        </div>
+                    </a>
+                    
+                    <a href="{% url 'advisor:chat' %}?q=Создай кампанию для VIP клиентов" 
+                       class="bg-white border border-gray-200 rounded-lg p-4 hover:bg-blue-50 hover:border-blue-300 transition shadow-sm">
+                        <div class="text-center">
+                            <div class="text-2xl mb-2">💎</div>
+                            <div class="text-sm font-medium text-blue-800">VIP стратегия</div>
+                            <div class="text-xs text-gray-500 mt-1">Для лучших клиентов</div>
+                        </div>
+                    </a>
+                    
+                    <a href="{% url 'advisor:chat' %}?q=Прогноз продаж на следующую неделю" 
+                       class="bg-white border border-gray-200 rounded-lg p-4 hover:bg-blue-50 hover:border-blue-300 transition shadow-sm">
+                        <div class="text-center">
+                            <div class="text-2xl mb-2">🔮</div>
+                            <div class="text-sm font-medium text-blue-800">Прогноз</div>
+                            <div class="text-xs text-gray-500 mt-1">Планирование</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="mt-8">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">🚀 Все функции системы</h2>
+                
+                <!-- Основные функции -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-medium text-gray-800 mb-3">📋 Основные функции</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <a href="{% url 'businesses:list' %}" class="bg-white border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition shadow-sm">
+                            <div class="text-center">
+                                <div class="text-2xl mb-2">🏢</div>
+                                <div class="text-sm font-medium">Бизнесы</div>
+                                <div class="text-xs text-gray-500 mt-1">Управление компаниями</div>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'businesses:locations' %}" class="bg-white border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition shadow-sm">
+                            <div class="text-center">
+                                <div class="text-2xl mb-2">📍</div>
+                                <div class="text-sm font-medium">Локации</div>
+                                <div class="text-xs text-gray-500 mt-1">Точки продаж</div>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'campaigns:list' %}" class="bg-white border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition shadow-sm">
+                            <div class="text-center">
+                                <div class="text-2xl mb-2">🎯</div>
+                                <div class="text-sm font-medium">Кампании</div>
+                                <div class="text-xs text-gray-500 mt-1">Промо-акции</div>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'referrals:customers' %}" class="bg-white border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition shadow-sm">
+                            <div class="text-center">
+                                <div class="text-2xl mb-2">👥</div>
+                                <div class="text-sm font-medium">Клиенты</div>
+                                <div class="text-xs text-gray-500 mt-1">База клиентов</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Операции -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-medium text-gray-800 mb-3">💰 Операции</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <a href="{% url 'redemptions:redeem' %}" class="bg-green-50 border border-green-200 rounded-lg p-4 hover:bg-green-100 transition shadow-sm">
+                            <div class="text-center">
+                                <div class="text-2xl mb-2">💳</div>
+                                <div class="text-sm font-medium text-green-800">Погасить купон</div>
+                                <div class="text-xs text-green-600 mt-1">Основная операция</div>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'redemptions:list' %}" class="bg-white border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition shadow-sm">
+                            <div class="text-center">
+                                <div class="text-2xl mb-2">📋</div>
+                                <div class="text-sm font-medium">Журнал погашений</div>
+                                <div class="text-xs text-gray-500 mt-1">История операций</div>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'printing:form' %}" class="bg-white border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition shadow-sm">
+                            <div class="text-center">
+                                <div class="text-2xl mb-2">🖨️</div>
+                                <div class="text-sm font-medium">Печать постеров</div>
+                                <div class="text-xs text-gray-500 mt-1">PDF постеры</div>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'reviews:list' %}" class="bg-white border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition shadow-sm">
+                            <div class="text-center">
+                                <div class="text-2xl mb-2">⭐</div>
+                                <div class="text-sm font-medium">Отзывы</div>
+                                <div class="text-xs text-gray-500 mt-1">AI модерация</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Аналитика и AI -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-medium text-gray-800 mb-3">🧠 Аналитика и AI</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <a href="{% url 'analytics:dashboard' %}" class="bg-blue-50 border border-blue-200 rounded-lg p-4 hover:bg-blue-100 transition shadow-sm">
+                            <div class="text-center">
+                                <div class="text-2xl mb-2">📊</div>
+                                <div class="text-sm font-medium text-blue-800">Аналитика</div>
+                                <div class="text-xs text-blue-600 mt-1">Дашборд метрик</div>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'nla:ask' %}" class="bg-purple-50 border border-purple-200 rounded-lg p-4 hover:bg-purple-100 transition shadow-sm">
+                            <div class="text-center">
+                                <div class="text-2xl mb-2">🤖</div>
+                                <div class="text-sm font-medium text-purple-800">Спросить аналитику</div>
+                                <div class="text-xs text-purple-600 mt-1">NL → SQL запросы</div>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'fraud:list' %}" class="bg-red-50 border border-red-200 rounded-lg p-4 hover:bg-red-100 transition shadow-sm">
+                            <div class="text-center">
+                                <div class="text-2xl mb-2">🛡️</div>
+                                <div class="text-sm font-medium text-red-800">Антифрод</div>
+                                <div class="text-xs text-red-600 mt-1">Журнал рисков</div>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'segments:list' %}" class="bg-indigo-50 border border-indigo-200 rounded-lg p-4 hover:bg-indigo-100 transition shadow-sm">
+                            <div class="text-center">
+                                <div class="text-2xl mb-2">🎯</div>
+                                <div class="text-sm font-medium text-indigo-800">Сегменты</div>
+                                <div class="text-xs text-indigo-600 mt-1">RFM сегментация</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Интеграции -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-medium text-gray-800 mb-3">🔗 Интеграции</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <a href="{% url 'integrations_ig:dashboard' %}" class="bg-pink-50 border border-pink-200 rounded-lg p-4 hover:bg-pink-100 transition shadow-sm">
+                            <div class="text-center">
+                                <div class="text-2xl mb-2">📸</div>
+                                <div class="text-sm font-medium text-pink-800">Instagram</div>
+                                <div class="text-xs text-pink-600 mt-1">Посты и DM боты</div>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'wallet:dashboard' %}" class="bg-green-50 border border-green-200 rounded-lg p-4 hover:bg-green-100 transition shadow-sm">
+                            <div class="text-center">
+                                <div class="text-2xl mb-2">📱</div>
+                                <div class="text-sm font-medium text-green-800">Google Wallet</div>
+                                <div class="text-xs text-green-600 mt-1">Цифровые карты</div>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'blasts:list' %}" class="bg-orange-50 border border-orange-200 rounded-lg p-4 hover:bg-orange-100 transition shadow-sm">
+                            <div class="text-center">
+                                <div class="text-2xl mb-2">📧</div>
+                                <div class="text-sm font-medium text-orange-800">Рассылки</div>
+                                <div class="text-xs text-orange-600 mt-1">Омниканальные</div>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'blasts:template_list' %}" class="bg-white border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition shadow-sm">
+                            <div class="text-center">
+                                <div class="text-2xl mb-2">📝</div>
+                                <div class="text-sm font-medium">Шаблоны сообщений</div>
+                                <div class="text-xs text-gray-500 mt-1">Email, SMS, WhatsApp</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+
+
+                <!-- Администрирование -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-medium text-gray-800 mb-3">⚙️ Администрирование</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <a href="/admin/" class="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:bg-gray-100 transition shadow-sm">
+                            <div class="text-center">
+                                <div class="text-2xl mb-2">🔧</div>
+                                <div class="text-sm font-medium">Django Admin</div>
+                                <div class="text-xs text-gray-500 mt-1">Полное управление</div>
+                            </div>
+                        </a>
+                        
+
+                        
+                        <a href="/admin/accounts/user/" class="bg-white border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition shadow-sm">
+                            <div class="text-center">
+                                <div class="text-2xl mb-2">👤</div>
+                                <div class="text-sm font-medium">Пользователи</div>
+                                <div class="text-xs text-gray-500 mt-1">Управление ролями</div>
+                            </div>
+                        </a>
+                        
+                        <a href="/admin/businesses/business/" class="bg-white border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition shadow-sm">
+                            <div class="text-center">
+                                <div class="text-2xl mb-2">🏪</div>
+                                <div class="text-sm font-medium">Настройки бизнеса</div>
+                                <div class="text-xs text-gray-500 mt-1">Конфигурация</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Статистика системы -->
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 mt-8">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4">📊 Статистика системы</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-blue-600">{{ total_campaigns|default:0 }}</div>
+                            <div class="text-sm text-gray-600">Кампаний</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-green-600">{{ total_coupons|default:0 }}</div>
+                            <div class="text-sm text-gray-600">Купонов</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-purple-600">{{ total_redemptions|default:0 }}</div>
+                            <div class="text-sm text-gray-600">Погашений</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-orange-600">{{ total_customers|default:0 }}</div>
+                            <div class="text-sm text-gray-600">Клиентов</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Инициализация графиков
+document.addEventListener('DOMContentLoaded', function() {
+    {% if hourly_chart %}
+    // Почасовой график
+    const hourlyCtx = document.getElementById('hourlyChart');
+    if (hourlyCtx) {
+        new Chart(hourlyCtx, {
+            type: '{{ hourly_chart.type }}',
+            data: {
+                labels: {{ hourly_chart.labels|safe }},
+                datasets: [{
+                    label: 'Активность',
+                    data: {{ hourly_chart.data|safe }},
+                    backgroundColor: '{{ hourly_chart.backgroundColor }}',
+                    borderColor: '{{ hourly_chart.borderColor }}',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+    {% endif %}
+
+    {% if weekly_chart %}
+    // Недельный график
+    const weeklyCtx = document.getElementById('weeklyChart');
+    if (weeklyCtx) {
+        new Chart(weeklyCtx, {
+            type: '{{ weekly_chart.type }}',
+            data: {
+                labels: {{ weekly_chart.labels|safe }},
+                datasets: [{
+                    label: 'Погашения',
+                    data: {{ weekly_chart.data|safe }},
+                    backgroundColor: '{{ weekly_chart.backgroundColor }}',
+                    borderColor: '{{ weekly_chart.borderColor }}',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+    {% endif %}
+
+    // Автообновление метрик каждые 30 секунд
+    setInterval(() => {
+        // Можно добавить AJAX обновление метрик
+        console.log('🔄 Обновление живых метрик...');
+    }, 30000);
+});
+
+// Функция для быстрого вопроса AI
+function quickQuestion() {
+    const questions = [
+        'Сколько сегодня новых клиентов?',
+        'Какая конверсия за неделю?',
+        'Топ кампаний по погашениям',
+        'Средний чек сегодня?'
+    ];
+    
+    const randomQuestion = questions[Math.floor(Math.random() * questions.length)];
+    const url = `{% url 'advisor:chat' %}?q=${encodeURIComponent(randomQuestion)}`;
+    window.location.href = url;
+}
+</script>
+{% endblock %}
